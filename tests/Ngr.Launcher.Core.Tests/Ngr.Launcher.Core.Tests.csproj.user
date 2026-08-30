@@ -1,0 +1,8 @@
+<Project>
+  <!-- Temporary late exclusion for a superseded integration-test source. -->
+  <Target Name="NgrExcludeSupersededProcessIntegrationTests" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Remove="Execution\SystemCommandSpawnerIntegrationTests.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

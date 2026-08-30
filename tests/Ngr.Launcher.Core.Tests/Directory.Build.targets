@@ -1,0 +1,12 @@
+<Project>
+  <!-- Superseded drafts are excluded until the workspace helper can delete them. -->
+  <ItemGroup>
+    <Compile Remove="Assert.cs" />
+    <Compile Remove="GlobalUsings.cs" />
+    <Compile Remove="ConfigurationStoreTests.cs" />
+    <Compile Remove="Execution\ShellCommandBuilderTests.cs" />
+    <Compile Remove="Execution\ProfileRunnerTests.cs" />
+    <Compile Remove="Execution\ManagedCommandRegistryTests.cs" />
+    <Compile Remove="Execution\CommandLogRetentionTests.cs" />
+  </ItemGroup>
+</Project>

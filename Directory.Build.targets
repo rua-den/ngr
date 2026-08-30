@@ -1,0 +1,11 @@
+<Project>
+  <!-- Temporary source exclusions while the workspace patch helper cannot update
+       existing files. Remove these exclusions and the superseded files once the
+       helper can perform normal update/delete patches again. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Ngr.Launcher.Core'">
+    <Compile Remove="$(MSBuildThisFileDirectory)src\Ngr.Launcher.Core\Configuration\AppConfiguration.cs" />
+    <Compile Remove="$(MSBuildThisFileDirectory)src\Ngr.Launcher.Core\Configuration\DomainValidators.cs" />
+    <Compile Remove="$(MSBuildThisFileDirectory)src\Ngr.Launcher.Core\Configuration\JsonConfigurationStore.cs" />
+    <Compile Remove="$(MSBuildThisFileDirectory)src\Ngr.Launcher.Core\Configuration\InvalidDataException.cs" />
+  </ItemGroup>
+</Project>

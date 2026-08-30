@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Ngr.Launcher.TestChild</RootNamespace>
+    <AssemblyName>Ngr.Launcher.TestChild</AssemblyName>
+  </PropertyGroup>
+</Project>

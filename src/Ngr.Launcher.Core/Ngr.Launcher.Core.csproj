@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ngr.Launcher.Core</RootNamespace>
+    <AssemblyName>Ngr.Launcher.Core</AssemblyName>
+  </PropertyGroup>
+</Project>

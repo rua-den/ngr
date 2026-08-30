@@ -1,0 +1,3 @@
+# This deterministic MSBuild extension is temporarily required to exclude
+# superseded sources while the Windows patch helper cannot update/delete them.
+!Ngr.Launcher.Core.csproj.user

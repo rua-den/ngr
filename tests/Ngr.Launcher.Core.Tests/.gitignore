@@ -1,0 +1,3 @@
+# This deterministic MSBuild extension is temporarily required to exclude a
+# superseded integration-test source while delete patches are unavailable.
+!Ngr.Launcher.Core.Tests.csproj.user

@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    Superseded sources are excluded here while the workspace patch helper cannot
+    update or delete existing files. This project-local target also repeats the
+    Phase 1 exclusions because MSBuild imports only the closest
+    Directory.Build.targets file.
+  -->
+  <ItemGroup>
+    <Compile Remove="Configuration\AppConfiguration.cs" />
+    <Compile Remove="Configuration\DomainValidators.cs" />
+    <Compile Remove="Configuration\JsonConfigurationStore.cs" />
+    <Compile Remove="Configuration\InvalidDataException.cs" />
+    <Compile Remove="Execution\ShellCommandBuilder.cs" />
+    <Compile Remove="Execution\ProfileRunner.cs" />
+    <Compile Remove="Execution\ManagedCommandRegistry.cs" />
+    <Compile Remove="Execution\CommandLogging.cs" />
+  </ItemGroup>
+</Project>

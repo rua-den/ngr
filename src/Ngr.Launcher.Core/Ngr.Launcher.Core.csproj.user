@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Temporary late compile-item cleanup. The Windows patch helper can add files
+    but cannot update/delete superseded ones; this target is removed during the
+    final source-consolidation pass.
+  -->
+  <Target Name="NgrExcludeSupersededSystemSpawnerSources" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Remove="Execution\SystemCommandSpawner.cs" />
+      <Compile Remove="Execution\SystemCommandSpawner.Fixed.cs" />
+    </ItemGroup>
+  </Target>
+</Project>
