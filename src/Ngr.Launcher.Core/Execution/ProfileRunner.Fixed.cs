@@ -65,7 +65,7 @@ public sealed class ProfileRunner(ICommandSpawner spawner, IDelay delay)
         for (var index = 0; index < steps.Count; index++)
         {
             var step = steps[index];
-            progress?.Invoke(new ProfileProgress(sessionId, step.ToolId, index + 1, steps.Count));
+            ReportProgress(progress, new ProfileProgress(sessionId, step.ToolId, index + 1, steps.Count));
 
             try
             {
@@ -95,6 +95,23 @@ public sealed class ProfileRunner(ICommandSpawner spawner, IDelay delay)
         }
 
         return new ProfileRunResult(sessionId, results);
+    }
+
+    private static void ReportProgress(Action<ProfileProgress>? progress, ProfileProgress update)
+    {
+        if (progress is null)
+        {
+            return;
+        }
+
+        try
+        {
+            progress(update);
+        }
+        catch
+        {
+            // Progress is an observer only. UI/reporting failures must not change execution semantics.
+        }
     }
 
     private static void AddCancelledSteps(
