@@ -1,80 +1,52 @@
 # NGR Launcher
 
-NGR Launcher is a lightweight Windows 10/11 desktop launcher for reusable tools and ordered one-click profiles.
+NGR Launcher is a lightweight Windows launcher for reusable applications, commands, and ordered one-click profiles.
 
 ## Current status
 
-The app is usable for manual testing now. The current `main` branch includes:
+The project is in active MVP development. The execution/configuration backend is functional, while the desktop management workflows are still being completed and manually smoke-tested.
 
-- Dashboard, Tool Library, Profiles, and Settings management UI.
-- Reusable Application and Command tools.
-- Tool templates and single-tool launch.
-- Ordered profiles with per-step delays.
-- Concurrent profile launches and cancellation of pending steps.
-- Managed hidden-command logging and process-tree shutdown.
-- System / Light / Dark themes.
-- Closing the main window hides it to the system tray.
-- Tray menu with Open, profile shortcuts, and Exit.
-- Safe Exit confirmation that cancels pending sessions and stops all managed command process trees while leaving launched desktop applications running.
+### Usable now
 
-Still planned before the MVP is complete:
+- Create reusable **Application** or **Command** tools.
+- Application tools support **Browse…** for executables/files and **Browse folder…** for working directories.
+- Tool IDs are generated automatically from the tool name for new tools.
+- Application and Command editors show only the fields relevant to the selected type.
+- Tool configuration is validated before Save/Test run; rooted file targets and working directories must exist.
+- Test-run a tool before saving it.
+- Create/edit/delete profiles, add reusable tools as ordered steps, configure delays, and reorder steps.
+- Launch profiles from Dashboard or the tray menu and cancel pending steps.
+- Multiple profile runs may execute concurrently.
+- Closing the management window hides it to the system tray when tray registration succeeds.
+- Tray menu includes Open, profile shortcuts, and Exit.
+- Explicit Exit confirms first, cancels pending profile steps, and stops managed command process trees.
+- Light, Dark, and System themes are supported, including the native Windows title bar.
 
-- Real Windows startup registration / Settings integration.
-- First-run startup onboarding and startup-hidden behavior.
-- Single-instance enforcement with activation of the existing instance.
-- Final source cleanup, full review, and final manual acceptance pass.
+### Still incomplete
+
+- Start-with-Windows registry integration.
+- First-run onboarding and startup-hidden behavior.
+- Single-instance activation.
+- Profile editor usability polish (automatic IDs / clearer step workflow / empty states).
+- Dashboard usability polish and final manual smoke testing.
+- Final source cleanup of temporary `.Fixed.cs` / `.Corrected.cs` compatibility files.
 
 ## Requirements
 
-- Windows 10 or Windows 11.
-- .NET 10 SDK.
-
-Check your SDK with:
-
-```powershell
-dotnet --version
-```
-
-## Run locally
-
-Clone the repository and run the WPF app:
-
-```powershell
-git clone https://github.com/rua-den/ngr.git
-cd ngr
-dotnet restore Ngr.Launcher.sln
-dotnet run --project src/Ngr.Launcher.App/Ngr.Launcher.App.csproj
-```
-
-The launcher stores its configuration and logs under:
-
-```text
-%LocalAppData%\NGR Launcher
-```
-
-Delete that directory only if you intentionally want a clean local configuration while testing.
-
-## Suggested manual smoke test
-
-1. Open **Tool Library** and create an Application or Command tool.
-2. Launch the tool directly and verify it starts correctly.
-3. Create a profile with multiple tools, reorder the steps, and add delays.
-4. Launch the profile from **Dashboard** and verify step status updates.
-5. Launch the same profile again while the first run is active to verify concurrent sessions.
-6. Start a delayed profile and cancel it; already-started commands should remain running while pending steps are cancelled.
-7. Change the theme between System, Light, and Dark, save, restart the app, and verify the theme persists.
-8. Click the window **X** button; the window should hide instead of exiting.
-9. Left-click the tray icon to restore the window.
-10. Right-click the tray icon and verify **Open**, **Profiles**, and **Exit**.
-11. Launch a profile from the tray profile shortcut.
-12. Start a managed command, choose **Exit**, decline once, then confirm. Confirmed exit should stop managed command process trees but must not terminate ordinary desktop applications launched by NGR Launcher.
-
-Known manual-test limitation: Windows startup and second-instance activation are not implemented yet, so do not test those as completed features.
+- Windows 10 or Windows 11
+- .NET 10 SDK for development
 
 ## Build
 
 ```powershell
+dotnet restore Ngr.Launcher.sln
 dotnet build Ngr.Launcher.sln -c Release
+```
+
+## Run
+
+```powershell
+dotnet run --project src/Ngr.Launcher.App/Ngr.Launcher.App.csproj
 ```
 
 ## Test
@@ -83,12 +55,15 @@ dotnet build Ngr.Launcher.sln -c Release
 dotnet test Ngr.Launcher.sln -c Debug
 ```
 
-The GitHub Actions Windows workflow also runs the Debug test suite and a Release build on pushes to `main`.
+## Quick manual test
 
-## Implementation plan
+1. Open **Tool Library** and choose **New tool**.
+2. Enter a name such as `Visual Studio Code`.
+3. Leave type as **Application**, click **Browse…**, and choose the executable/file you want NGR to launch.
+4. Optionally choose a **Working directory** with **Browse folder…**.
+5. Click **Test run**. If it launches correctly, click **Save tool**.
+6. Open **Profiles**, create a profile, add the saved tool as a step, then save the profile.
+7. Open **Dashboard**, select the profile, and click **Run profile**.
+8. Close the main window and verify NGR remains in the tray; use tray **Open** to restore it and **Exit** to fully stop NGR.
 
-The working implementation plan is in:
-
-```text
-docs/plans/2026-08-30-ngr-launcher-implementation.md
-```
+Data is stored under `%LocalAppData%\NGR Launcher`.
