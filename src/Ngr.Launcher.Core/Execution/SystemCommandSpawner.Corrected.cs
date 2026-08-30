@@ -9,7 +9,16 @@ public sealed class SystemCommandSpawner : ICommandSpawner
 {
     private const long MaxLogContentBytes = 10L * 1024 * 1024;
     private const int RetainedLogCount = 10;
+    private const int MaxSafeToolDirectoryNameLength = 80;
     private static readonly object RetentionGate = new();
+    private static readonly HashSet<string> ReservedWindowsDeviceNames = new(
+        new[]
+        {
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        },
+        StringComparer.OrdinalIgnoreCase);
 
     private readonly ManagedCommandRegistry _registry;
     private readonly string _logRootDirectory;
@@ -165,8 +174,35 @@ public sealed class SystemCommandSpawner : ICommandSpawner
 
     private static string SafePathSegment(string toolId)
     {
+        if (IsSafePathSegment(toolId))
+        {
+            return toolId;
+        }
+
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(toolId)));
         return $"tool-{hash[..24]}";
+    }
+
+    private static bool IsSafePathSegment(string toolId)
+    {
+        if (toolId.Length == 0 || toolId.Length > MaxSafeToolDirectoryNameLength)
+        {
+            return false;
+        }
+
+        if (toolId is "." or ".." || char.IsWhiteSpace(toolId[^1]) || toolId[^1] == '.')
+        {
+            return false;
+        }
+
+        var invalidCharacters = Path.GetInvalidFileNameChars();
+        if (toolId.Any(character => char.IsControl(character) || invalidCharacters.Contains(character)))
+        {
+            return false;
+        }
+
+        var deviceName = toolId.Split('.', 2)[0];
+        return !ReservedWindowsDeviceNames.Contains(deviceName);
     }
 
     private static void TryKillTree(Process process)
