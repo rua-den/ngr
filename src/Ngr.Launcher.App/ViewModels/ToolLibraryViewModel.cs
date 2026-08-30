@@ -48,7 +48,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         LaunchCommand = new RelayCommand(LaunchCurrent);
 
         SelectedTemplate = Templates.FirstOrDefault();
-        _workspace.Changed += (_, _) => _dispatcher.Invoke(RefreshFromWorkspace);
+        _workspace.Changed += (_, _) => _dispatcher.Invoke(() => RefreshFromWorkspace());
         RefreshFromWorkspace();
         New();
     }

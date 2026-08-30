@@ -54,7 +54,7 @@ public sealed class ProfilesViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         DeleteCommand = new AsyncRelayCommand(DeleteAsync);
 
-        _workspace.Changed += (_, _) => _dispatcher.Invoke(RefreshFromWorkspace);
+        _workspace.Changed += (_, _) => _dispatcher.Invoke(() => RefreshFromWorkspace());
         RefreshFromWorkspace();
         New();
     }
