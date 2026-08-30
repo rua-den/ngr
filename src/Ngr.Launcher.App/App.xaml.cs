@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using Ngr.Launcher.App.Services;
@@ -10,6 +11,9 @@ namespace Ngr.Launcher.App;
 
 public partial class App : System.Windows.Application
 {
+    private LauncherTrayIconService? _trayIcon;
+    private WindowVisibilityController? _windowVisibility;
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -43,6 +47,26 @@ public partial class App : System.Windows.Application
             window.Show();
             themeService.Attach(window);
 
+            var visibility = new WindowVisibilityController(new WpfManagementWindow(window));
+            var trayIcon = new LauncherTrayIconService(
+                () => dispatcher.Invoke(visibility.ShowFromTray),
+                "NGR Launcher");
+
+            if (trayIcon.Register())
+            {
+                _windowVisibility = visibility;
+                _trayIcon = trayIcon;
+                window.Closing += OnMainWindowClosing;
+            }
+            else
+            {
+                MessageBox.Show(
+                    "The system tray icon could not be registered. Closing the window will exit NGR Launcher.",
+                    "NGR Launcher tray",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+
             if (loadResult.Warnings.Count > 0)
             {
                 MessageBox.Show(
@@ -60,6 +84,20 @@ public partial class App : System.Windows.Application
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(-1);
+        }
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _trayIcon?.Unregister();
+        base.OnExit(e);
+    }
+
+    private void OnMainWindowClosing(object? sender, CancelEventArgs e)
+    {
+        if (_windowVisibility is not null)
+        {
+            e.Cancel = _windowVisibility.HandleCloseRequest();
         }
     }
 }
