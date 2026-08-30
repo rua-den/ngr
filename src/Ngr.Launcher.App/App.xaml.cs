@@ -29,16 +29,19 @@ public partial class App : System.Windows.Application
             var runner = new ProfileRunner(spawner, new SystemDelay());
             var confirmation = new WpfConfirmationService();
             var dispatcher = new WpfUiDispatcher();
+            var themeService = new WpfThemeService();
+            themeService.Apply(workspace.Configuration.Settings.Theme);
 
             var dashboard = new DashboardViewModel(workspace, runner, cancellations, dispatcher);
             var tools = new ToolLibraryViewModel(workspace, spawner, confirmation, dispatcher);
             var profiles = new ProfilesViewModel(workspace, confirmation, dispatcher);
-            var settings = new SettingsViewModel(workspace, dispatcher);
+            var settings = new SettingsViewModel(workspace, dispatcher, themeService);
             var mainViewModel = new MainViewModel(dashboard, tools, profiles, settings);
 
             var window = new MainWindow { DataContext = mainViewModel };
             MainWindow = window;
             window.Show();
+            themeService.Attach(window);
 
             if (loadResult.Warnings.Count > 0)
             {
