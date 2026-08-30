@@ -13,6 +13,7 @@ public partial class App : System.Windows.Application
 {
     private LauncherTrayIconService? _trayIcon;
     private WindowVisibilityController? _windowVisibility;
+    private ApplicationExitController? _exitController;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -48,20 +49,32 @@ public partial class App : System.Windows.Application
             themeService.Attach(window);
 
             var visibility = new WindowVisibilityController(new WpfManagementWindow(window));
+            ApplicationExitController? exitController = null;
             var trayIcon = new LauncherTrayIconService(
                 () => dispatcher.Invoke(visibility.ShowFromTray),
+                profile => _ = dashboard.LaunchAsync(profile),
+                () => exitController?.RequestExit(),
+                workspace.Configuration.Profiles,
                 "NGR Launcher");
+            exitController = new ApplicationExitController(
+                confirmation,
+                cancellations,
+                new ManagedCommandShutdown(registry),
+                visibility,
+                () => trayIcon.Unregister(),
+                Shutdown);
 
-            if (trayIcon.Register())
-            {
-                _windowVisibility = visibility;
-                _trayIcon = trayIcon;
-                window.Closing += OnMainWindowClosing;
-            }
-            else
+            _windowVisibility = visibility;
+            _trayIcon = trayIcon;
+            _exitController = exitController;
+            window.Closing += OnMainWindowClosing;
+            workspace.Changed += (_, _) => dispatcher.Invoke(
+                () => trayIcon.UpdateProfiles(workspace.Configuration.Profiles));
+
+            if (!trayIcon.Register())
             {
                 MessageBox.Show(
-                    "The system tray icon could not be registered. Closing the window will exit NGR Launcher.",
+                    "The system tray icon could not be registered. Closing the window will ask for confirmation and exit NGR Launcher instead.",
                     "NGR Launcher tray",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -95,9 +108,18 @@ public partial class App : System.Windows.Application
 
     private void OnMainWindowClosing(object? sender, CancelEventArgs e)
     {
-        if (_windowVisibility is not null)
+        if (_windowVisibility is null || _windowVisibility.IsCloseAllowed)
+        {
+            return;
+        }
+
+        if (_trayIcon?.IsRegistered == true)
         {
             e.Cancel = _windowVisibility.HandleCloseRequest();
+            return;
         }
+
+        e.Cancel = true;
+        _ = Dispatcher.BeginInvoke(() => _exitController?.RequestExit());
     }
 }
