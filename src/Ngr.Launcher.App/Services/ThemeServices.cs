@@ -57,14 +57,16 @@ public sealed class WpfThemeService : IThemeService
         if (_window is not null && !ReferenceEquals(_window, window))
         {
             StopWatchingSystemTheme();
+            _window.Loaded -= OnWindowLoaded;
         }
 
         _window = window;
-        ApplyNativeWindowTheme(ApplicationThemeManager.GetAppTheme());
+        _window.Loaded -= OnWindowLoaded;
+        _window.Loaded += OnWindowLoaded;
 
-        if (_currentTheme == ThemePreference.System)
+        if (_window.IsLoaded)
         {
-            StartWatchingSystemTheme();
+            ApplyWindowThemeAfterLoad();
         }
     }
 
@@ -101,6 +103,19 @@ public sealed class WpfThemeService : IThemeService
         ApplyNativeWindowTheme(appTheme);
     }
 
+    private void OnWindowLoaded(object sender, RoutedEventArgs e) => ApplyWindowThemeAfterLoad();
+
+    private void ApplyWindowThemeAfterLoad()
+    {
+        var theme = ApplicationThemeManager.GetAppTheme();
+        ApplyLauncherPalette(theme);
+        ApplyNativeWindowTheme(theme);
+        if (_currentTheme == ThemePreference.System)
+        {
+            StartWatchingSystemTheme();
+        }
+    }
+
     private void OnApplicationThemeChanged(ApplicationTheme theme, Color accent)
     {
         ApplyLauncherPalette(theme);
@@ -123,10 +138,6 @@ public sealed class WpfThemeService : IThemeService
         var dark = theme == ApplicationTheme.Dark;
         var resources = Application.Current.Resources;
 
-        // Keep each workbench plane visibly separate, like a desktop IDE: the
-        // editor canvas, sidebar, title/activity chrome, controls and cards use
-        // distinct opaque surfaces instead of translucent brushes that collapse
-        // into one flat block in dark mode.
         SetBrush(resources, "ApplicationBackgroundBrush", dark ? "#17191D" : "#F2F4F8");
         SetBrush(resources, "CardBackgroundFillColorDefaultBrush", dark ? "#252930" : "#FFFFFF");
         SetBrush(resources, "CardBackgroundFillColorSecondaryBrush", dark ? "#111318" : "#E9EDF3");
@@ -161,18 +172,12 @@ public sealed class WpfThemeService : IThemeService
 
         var dark = theme == ApplicationTheme.Dark;
         var enabled = dark ? 1 : 0;
-
-        // Attribute 20 is the documented value. Attribute 19 keeps the same
-        // behavior working on older Windows 10 builds where the value differed.
         var result = DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref enabled, sizeof(int));
         if (result != 0)
         {
             _ = DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkModeLegacy, ref enabled, sizeof(int));
         }
 
-        // Windows 11 supports explicit caption/text colors. Older Windows
-        // versions simply reject these attributes, so the immersive dark/light
-        // flag above remains the safe fallback there.
         var captionColor = ToColorRef(dark ? "#111318" : "#E9EDF3");
         var textColor = ToColorRef(dark ? "#F4F5F7" : "#202124");
         _ = DwmSetWindowAttribute(handle, DwmwaCaptionColor, ref captionColor, sizeof(int));

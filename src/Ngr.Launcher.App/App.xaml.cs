@@ -21,6 +21,7 @@ public partial class App : System.Windows.Application
 
         try
         {
+            var startupLaunch = StartupLaunchArguments.IsStartupLaunch(e.Args);
             var dataDirectory = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "NGR Launcher");
@@ -28,6 +29,13 @@ public partial class App : System.Windows.Application
             var workspace = new LauncherWorkspace(store);
             var loadResult = await workspace.InitializeAsync();
 
+            var executablePath = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(executablePath))
+            {
+                throw new InvalidOperationException("NGR Launcher could not determine its executable path.");
+            }
+
+            var startupRegistration = new WindowsStartupRegistrationService(executablePath);
             var cancellations = new ProfileCancellationRegistry();
             var registry = new ManagedCommandRegistry(cancellations);
             var spawner = new SystemCommandSpawner(registry, Path.Combine(dataDirectory, "Logs"));
@@ -41,13 +49,16 @@ public partial class App : System.Windows.Application
             var dashboard = new DashboardViewModel(workspace, runner, cancellations, dispatcher);
             var tools = new ToolLibraryViewModel(workspace, spawner, confirmation, dispatcher, pathPicker);
             var profiles = new ProfilesViewModel(workspace, confirmation, dispatcher);
-            var settings = new SettingsViewModel(workspace, dispatcher, themeService);
+            var settings = new SettingsViewModel(workspace, dispatcher, themeService, startupRegistration);
             var mainViewModel = new MainViewModel(dashboard, tools, profiles, settings);
 
             var window = new MainWindow { DataContext = mainViewModel };
             MainWindow = window;
-            window.Show();
             themeService.Attach(window);
+            if (!startupLaunch)
+            {
+                window.Show();
+            }
 
             var visibility = new WindowVisibilityController(new WpfManagementWindow(window));
             ApplicationExitController? exitController = null;
@@ -72,16 +83,42 @@ public partial class App : System.Windows.Application
             workspace.Changed += (_, _) => dispatcher.Invoke(
                 () => trayIcon.UpdateProfiles(workspace.Configuration.Profiles));
 
-            if (!trayIcon.Register())
+            var trayRegistered = trayIcon.Register();
+            if (!trayRegistered)
             {
+                if (!window.IsVisible)
+                {
+                    window.Show();
+                }
+
                 MessageBox.Show(
-                    "The system tray icon could not be registered. Closing the window will ask for confirmation and exit NGR Launcher instead.",
+                    "The system tray icon could not be registered. NGR Launcher was opened normally so it cannot become stranded in the background.",
                     "NGR Launcher tray",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }
 
-            if (loadResult.Warnings.Count > 0)
+            if (!startupLaunch)
+            {
+                var onboarding = new StartupOnboardingCoordinator(
+                    workspace,
+                    confirmation,
+                    startupRegistration);
+                try
+                {
+                    await onboarding.RunIfNeededAsync(startupLaunch: false);
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show(
+                        $"Windows startup could not be configured: {exception.Message}\n\nYou can retry from Settings.",
+                        "NGR Launcher startup",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+            }
+
+            if (loadResult.Warnings.Count > 0 && (!startupLaunch || !trayRegistered))
             {
                 MessageBox.Show(
                     string.Join(Environment.NewLine, loadResult.Warnings),
