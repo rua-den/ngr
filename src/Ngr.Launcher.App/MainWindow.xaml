@@ -3,108 +3,379 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Ngr.Launcher.App.ViewModels"
         Title="NGR Launcher"
-        Width="1180"
-        Height="760"
-        MinWidth="980"
-        MinHeight="640"
+        Width="1240"
+        Height="800"
+        MinWidth="1040"
+        MinHeight="680"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource ApplicationBackgroundBrush}"
-        Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
   <Window.Resources>
-    <Style x:Key="NavButtonStyle" TargetType="Button">
-      <Setter Property="Foreground" Value="#E5E7EB" />
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="HorizontalContentAlignment" Value="Left" />
-      <Setter Property="Padding" Value="18,12" />
-      <Setter Property="Margin" Value="10,3" />
-      <Setter Property="FontSize" Value="14" />
-      <Setter Property="Cursor" Value="Hand" />
-      <Style.Triggers>
-        <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="Background" Value="#243247" />
-        </Trigger>
-      </Style.Triggers>
+    <!-- Material-inspired type scale -->
+    <Style x:Key="PageTitleStyle" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="FontSize" Value="24" />
+      <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
+    <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="FontSize" Value="17" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="LabelStyle" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+
+    <Style x:Key="BodySecondaryStyle" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- Consistent surfaces -->
+    <Style x:Key="CardStyle" TargetType="Border">
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="16" />
+      <Setter Property="Padding" Value="20" />
+    </Style>
+
+    <!-- Buttons use a small custom template so radius/contrast stay consistent in both themes. -->
     <Style x:Key="PrimaryButtonStyle" TargetType="Button">
       <Setter Property="Background" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
       <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
       <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="Padding" Value="14,8" />
-      <Setter Property="Margin" Value="4" />
+      <Setter Property="Padding" Value="18,10" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Root"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="10"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Opacity" Value="0.90" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Root" Property="Opacity" Value="0.80" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
     <Style x:Key="SecondaryButtonStyle" TargetType="Button">
       <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
       <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
       <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
-      <Setter Property="Padding" Value="12,8" />
-      <Setter Property="Margin" Value="4" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="15,9" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Root"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="10"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Opacity" Value="0.82" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Root" Property="Opacity" Value="0.70" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
+    <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+      <Setter Property="Foreground" Value="#E05252" />
+    </Style>
+
+    <Style x:Key="NavButtonStyle" TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="16,12" />
+      <Setter Property="Margin" Value="0,2" />
+      <Setter Property="MinHeight" Value="44" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Root"
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="10"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Root" Property="Opacity" Value="0.75" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Explicit control colors fix native WPF controls becoming white-on-white in dark mode. -->
     <Style TargetType="TextBox">
-      <Setter Property="Padding" Value="8,6" />
-      <Setter Property="Margin" Value="0,4,0,10" />
+      <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+      <Setter Property="CaretBrush" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="SelectionBrush" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="11,8" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,6,0,14" />
     </Style>
 
     <Style TargetType="ComboBox">
-      <Setter Property="Padding" Value="6,4" />
-      <Setter Property="Margin" Value="0,4,0,10" />
+      <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,6,0,14" />
     </Style>
 
+    <Style TargetType="ComboBoxItem">
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Padding" Value="10,8" />
+    </Style>
+
+    <Style TargetType="CheckBox">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style TargetType="ListBox">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="LibraryListItemStyle" TargetType="ListBoxItem">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Padding" Value="12,10" />
+      <Setter Property="Margin" Value="0,2" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="Root"
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="9"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="SessionListItemStyle" TargetType="ListBoxItem">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="Root" Background="Transparent" Padding="2">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Root" Property="Opacity" Value="0.82" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="DataGrid">
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="GridLinesVisibility" Value="Horizontal" />
+      <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+      <Setter Property="RowBackground" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+      <Setter Property="AlternatingRowBackground" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+      <Setter Property="RowHeight" Value="48" />
+      <Setter Property="ColumnHeaderHeight" Value="42" />
+    </Style>
+
+    <Style TargetType="DataGridColumnHeader">
+      <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style TargetType="DataGridCell">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- Dashboard -->
     <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
-      <Grid Margin="28">
+      <Grid Margin="30,26,30,30">
         <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="10" Padding="18" Margin="0,0,0,16">
-          <StackPanel>
-            <TextBlock Text="Launch a profile" FontSize="18" FontWeight="SemiBold" />
-            <DockPanel Margin="0,12,0,0" LastChildFill="False">
-              <ComboBox Width="320"
+
+        <Border Style="{StaticResource CardStyle}" Padding="24" Margin="0,0,0,24">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Launch workspace" Style="{StaticResource SectionTitleStyle}" />
+              <TextBlock Text="Choose a profile and start its tools in order." Style="{StaticResource BodySecondaryStyle}" Margin="0,4,0,14" />
+              <ComboBox Width="360"
+                        HorizontalAlignment="Left"
                         ItemsSource="{Binding Profiles}"
                         SelectedItem="{Binding SelectedProfile}"
-                        DisplayMemberPath="Name" />
-              <Button Content="Launch" Command="{Binding LaunchCommand}" Style="{StaticResource PrimaryButtonStyle}" />
-              <Button Content="Cancel selected run" Command="{Binding CancelCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-            </DockPanel>
-            <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-          </StackPanel>
+                        DisplayMemberPath="Name"
+                        Margin="0" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="20,0,0,0">
+              <Button Content="Cancel selected" Command="{Binding CancelCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" />
+              <Button Content="Launch profile" Command="{Binding LaunchCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+            </StackPanel>
+          </Grid>
         </Border>
 
-        <ListBox Grid.Row="1"
+        <Grid Grid.Row="1" Margin="2,0,2,12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Recent runs" Style="{StaticResource SectionTitleStyle}" />
+          <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" Style="{StaticResource BodySecondaryStyle}" VerticalAlignment="Center" />
+        </Grid>
+
+        <ListBox Grid.Row="2"
                  ItemsSource="{Binding Sessions}"
                  SelectedItem="{Binding SelectedSession}"
-                 Background="Transparent"
-                 BorderThickness="0"
-                 HorizontalContentAlignment="Stretch">
+                 ItemContainerStyle="{StaticResource SessionListItemStyle}">
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+              <Border Style="{StaticResource CardStyle}" Padding="18" Margin="0,0,0,12">
                 <StackPanel>
-                  <DockPanel>
-                    <TextBlock Text="{Binding ProfileName}" FontSize="16" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" DockPanel.Dock="Right" />
-                  </DockPanel>
-                  <TextBlock Text="{Binding Id}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,2,0,10" />
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                      <TextBlock Text="{Binding ProfileName}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                      <TextBlock Text="{Binding Id}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,3,0,0" />
+                    </StackPanel>
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            CornerRadius="12"
+                            Padding="10,5"
+                            VerticalAlignment="Top">
+                      <TextBlock Text="{Binding Status}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    </Border>
+                  </Grid>
+
+                  <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="0,14,0,10" />
+
                   <ItemsControl ItemsSource="{Binding Steps}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
-                        <Grid Margin="0,3">
+                        <Grid Margin="0,5">
                           <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28" />
                             <ColumnDefinition Width="2*" />
-                            <ColumnDefinition Width="90" />
+                            <ColumnDefinition Width="100" />
                             <ColumnDefinition Width="130" />
                             <ColumnDefinition Width="2*" />
                           </Grid.ColumnDefinitions>
-                          <TextBlock Text="{Binding ToolName}" />
-                          <TextBlock Grid.Column="1" Text="{Binding DelayBeforeSeconds, StringFormat={}{0}s delay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                          <TextBlock Grid.Column="2" Text="{Binding Status}" FontWeight="SemiBold" />
-                          <TextBlock Grid.Column="3" Text="{Binding Error}" Foreground="#E05252" TextWrapping="Wrap" />
+                          <Border Width="8" Height="8" CornerRadius="4" Background="{DynamicResource SystemAccentColorPrimaryBrush}" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="{Binding ToolName}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="{Binding DelayBeforeSeconds, StringFormat={}{0}s delay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="3" Text="{Binding Status}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="4" Text="{Binding Error}" Foreground="#E05252" TextWrapping="Wrap" VerticalAlignment="Center" />
                         </Grid>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -117,173 +388,241 @@
       </Grid>
     </DataTemplate>
 
+    <!-- Tool Library -->
     <DataTemplate DataType="{x:Type vm:ToolLibraryViewModel}">
-      <Grid Margin="28">
+      <Grid Margin="30,26,30,30">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="285" />
-          <ColumnDefinition Width="16" />
+          <ColumnDefinition Width="300" />
+          <ColumnDefinition Width="20" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="10" Padding="14">
+        <Border Style="{StaticResource CardStyle}" Padding="18">
           <DockPanel>
             <StackPanel DockPanel.Dock="Top">
-              <TextBlock Text="Tools" FontSize="18" FontWeight="SemiBold" />
-              <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
-                <Button Content="New" Command="{Binding NewCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-              </StackPanel>
-              <TextBlock Text="Template" FontWeight="SemiBold" />
+              <TextBlock Text="Your tools" Style="{StaticResource SectionTitleStyle}" />
+              <TextBlock Text="Reusable apps and commands." Style="{StaticResource BodySecondaryStyle}" Margin="0,3,0,14" />
+              <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="10" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Content="New tool" Command="{Binding NewCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButtonStyle}" />
+              </Grid>
+
+              <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="0,0,0,16" />
+              <TextBlock Text="QUICK TEMPLATE" Style="{StaticResource LabelStyle}" />
               <ComboBox ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}" DisplayMemberPath="Name" />
-              <Button Content="Apply template" Command="{Binding ApplyTemplateCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+              <Button Content="Apply template" Command="{Binding ApplyTemplateCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,0,12" />
             </StackPanel>
+
             <ListBox ItemsSource="{Binding Tools}"
                      SelectedItem="{Binding SelectedTool}"
                      DisplayMemberPath="Name"
-                     BorderThickness="0"
-                     Margin="0,12,0,0" />
+                     ItemContainerStyle="{StaticResource LibraryListItemStyle}" />
           </DockPanel>
         </Border>
 
-        <Border Grid.Column="2" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="10" Padding="20">
+        <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="24">
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-              <TextBlock Text="Tool editor" FontSize="18" FontWeight="SemiBold" />
-              <Grid Margin="0,14,0,0">
+              <TextBlock Text="Tool details" Style="{StaticResource SectionTitleStyle}" />
+              <TextBlock Text="Edit how this tool is launched. Changes are saved locally." Style="{StaticResource BodySecondaryStyle}" Margin="0,4,0,22" />
+
+              <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="16" />
+                  <ColumnDefinition Width="22" />
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
+
                 <StackPanel>
-                  <TextBlock Text="ID" FontWeight="SemiBold" />
+                  <TextBlock Text="BASICS" Style="{StaticResource LabelStyle}" Margin="0,0,0,10" />
+                  <TextBlock Text="ID" Style="{StaticResource LabelStyle}" />
                   <TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}" />
-                  <TextBlock Text="Name" FontWeight="SemiBold" />
+                  <TextBlock Text="Name" Style="{StaticResource LabelStyle}" />
                   <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                  <TextBlock Text="Kind" FontWeight="SemiBold" />
+                  <TextBlock Text="Kind" Style="{StaticResource LabelStyle}" />
                   <ComboBox ItemsSource="{Binding ToolKinds}" SelectedItem="{Binding Kind}" />
-                  <TextBlock Text="Target (applications)" FontWeight="SemiBold" />
+                  <TextBlock Text="Application target" Style="{StaticResource LabelStyle}" />
                   <TextBox Text="{Binding Target, UpdateSourceTrigger=PropertyChanged}" />
-                  <TextBlock Text="Arguments" FontWeight="SemiBold" />
+                  <TextBlock Text="Arguments" Style="{StaticResource LabelStyle}" />
                   <TextBox Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" />
-                  <TextBlock Text="Working directory" FontWeight="SemiBold" />
+                  <TextBlock Text="Working directory" Style="{StaticResource LabelStyle}" />
                   <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
+
                 <StackPanel Grid.Column="2">
-                  <TextBlock Text="Command" FontWeight="SemiBold" />
-                  <TextBox Text="{Binding CommandText, UpdateSourceTrigger=PropertyChanged}" Height="82" AcceptsReturn="True" TextWrapping="Wrap" />
-                  <TextBlock Text="Shell" FontWeight="SemiBold" />
+                  <TextBlock Text="COMMAND" Style="{StaticResource LabelStyle}" Margin="0,0,0,10" />
+                  <TextBlock Text="Command text" Style="{StaticResource LabelStyle}" />
+                  <TextBox Text="{Binding CommandText, UpdateSourceTrigger=PropertyChanged}"
+                           Height="112"
+                           AcceptsReturn="True"
+                           TextWrapping="Wrap"
+                           VerticalContentAlignment="Top" />
+                  <TextBlock Text="Shell" Style="{StaticResource LabelStyle}" />
                   <ComboBox ItemsSource="{Binding ShellKinds}" SelectedItem="{Binding Shell}" />
-                  <TextBlock Text="Window mode" FontWeight="SemiBold" />
+                  <TextBlock Text="Window mode" Style="{StaticResource LabelStyle}" />
                   <ComboBox ItemsSource="{Binding WindowModes}" SelectedItem="{Binding WindowMode}" />
-                  <TextBlock Text="Environment (KEY=VALUE, one per line)" FontWeight="SemiBold" />
-                  <TextBox Text="{Binding EnvironmentText, UpdateSourceTrigger=PropertyChanged}" Height="120" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" />
+                  <TextBlock Text="Environment · KEY=VALUE, one per line" Style="{StaticResource LabelStyle}" />
+                  <TextBox Text="{Binding EnvironmentText, UpdateSourceTrigger=PropertyChanged}"
+                           Height="128"
+                           AcceptsReturn="True"
+                           TextWrapping="NoWrap"
+                           VerticalContentAlignment="Top"
+                           VerticalScrollBarVisibility="Auto" />
                 </StackPanel>
               </Grid>
-              <StackPanel Orientation="Horizontal" Margin="-4,8,0,0">
-                <Button Content="Save" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+
+              <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="0,8,0,16" />
+              <StackPanel Orientation="Horizontal">
+                <Button Content="Save tool" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,10,0" />
                 <Button Content="Launch now" Command="{Binding LaunchCommand}" Style="{StaticResource SecondaryButtonStyle}" />
               </StackPanel>
-              <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,8,0,0" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource BodySecondaryStyle}" Margin="0,12,0,0" />
             </StackPanel>
           </ScrollViewer>
         </Border>
       </Grid>
     </DataTemplate>
 
+    <!-- Profiles -->
     <DataTemplate DataType="{x:Type vm:ProfilesViewModel}">
-      <Grid Margin="28">
+      <Grid Margin="30,26,30,30">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="285" />
-          <ColumnDefinition Width="16" />
+          <ColumnDefinition Width="300" />
+          <ColumnDefinition Width="20" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="10" Padding="14">
+
+        <Border Style="{StaticResource CardStyle}" Padding="18">
           <DockPanel>
             <StackPanel DockPanel.Dock="Top">
-              <TextBlock Text="Profiles" FontSize="18" FontWeight="SemiBold" />
-              <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
-                <Button Content="New" Command="{Binding NewCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-              </StackPanel>
+              <TextBlock Text="Profiles" Style="{StaticResource SectionTitleStyle}" />
+              <TextBlock Text="Ordered sets of reusable tools." Style="{StaticResource BodySecondaryStyle}" Margin="0,3,0,14" />
+              <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="10" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button Content="New profile" Command="{Binding NewCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                <Button Grid.Column="2" Content="Delete" Command="{Binding DeleteCommand}" Style="{StaticResource DangerButtonStyle}" />
+              </Grid>
             </StackPanel>
-            <ListBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" DisplayMemberPath="Name" BorderThickness="0" />
+            <ListBox ItemsSource="{Binding Profiles}"
+                     SelectedItem="{Binding SelectedProfile}"
+                     DisplayMemberPath="Name"
+                     ItemContainerStyle="{StaticResource LibraryListItemStyle}" />
           </DockPanel>
         </Border>
 
-        <Border Grid.Column="2" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="10" Padding="20">
+        <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="24">
           <Grid>
             <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
               <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <TextBlock Text="Profile editor" FontSize="18" FontWeight="SemiBold" />
-            <Grid Grid.Row="1" Margin="0,14,0,10">
+
+            <StackPanel>
+              <TextBlock Text="Profile details" Style="{StaticResource SectionTitleStyle}" />
+              <TextBlock Text="Tools launch top-to-bottom. Delay is applied before each step." Style="{StaticResource BodySecondaryStyle}" Margin="0,4,0,20" />
+            </StackPanel>
+
+            <Grid Grid.Row="1">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="22" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
               <StackPanel>
-                <TextBlock Text="ID" FontWeight="SemiBold" />
+                <TextBlock Text="ID" Style="{StaticResource LabelStyle}" />
                 <TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}" />
               </StackPanel>
               <StackPanel Grid.Column="2">
-                <TextBlock Text="Name" FontWeight="SemiBold" />
+                <TextBlock Text="Name" Style="{StaticResource LabelStyle}" />
                 <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
               </StackPanel>
             </Grid>
-            <StackPanel Grid.Row="2">
-              <StackPanel Orientation="Horizontal" Margin="-4,0,0,6">
-                <Button Content="Add step" Command="{Binding AddStepCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Content="Remove" Command="{Binding RemoveStepCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Content="Move up" Command="{Binding MoveStepUpCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Content="Move down" Command="{Binding MoveStepDownCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+
+            <Grid Grid.Row="2" Margin="0,2,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="STEPS" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" />
+              <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Add" Command="{Binding AddStepCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
+                <Button Content="Remove" Command="{Binding RemoveStepCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
+                <Button Content="↑" Command="{Binding MoveStepUpCommand}" Style="{StaticResource SecondaryButtonStyle}" MinWidth="44" Margin="0,0,8,0" />
+                <Button Content="↓" Command="{Binding MoveStepDownCommand}" Style="{StaticResource SecondaryButtonStyle}" MinWidth="44" />
               </StackPanel>
-              <DataGrid ItemsSource="{Binding Steps}"
-                        SelectedItem="{Binding SelectedStep}"
-                        AutoGenerateColumns="False"
-                        CanUserAddRows="False"
-                        HeadersVisibility="Column"
-                        MinHeight="260">
-                <DataGrid.Columns>
-                  <DataGridTemplateColumn Header="Tool" Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                      <DataTemplate>
-                        <ComboBox ItemsSource="{Binding DataContext.AvailableTools, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                  DisplayMemberPath="Name"
-                                  SelectedValuePath="Id"
-                                  SelectedValue="{Binding ToolId, UpdateSourceTrigger=PropertyChanged}"
-                                  Margin="0" />
-                      </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                  </DataGridTemplateColumn>
-                  <DataGridTextColumn Header="Delay before launch (seconds)" Width="220" Binding="{Binding DelayBeforeSeconds, UpdateSourceTrigger=PropertyChanged}" />
-                </DataGrid.Columns>
-              </DataGrid>
-            </StackPanel>
-            <StackPanel Grid.Row="3">
+            </Grid>
+
+            <DataGrid Grid.Row="3"
+                      ItemsSource="{Binding Steps}"
+                      SelectedItem="{Binding SelectedStep}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      HeadersVisibility="Column"
+                      AlternationCount="2"
+                      MinHeight="280">
+              <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Tool" Width="*">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                      <ComboBox ItemsSource="{Binding DataContext.AvailableTools, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                DisplayMemberPath="Name"
+                                SelectedValuePath="Id"
+                                SelectedValue="{Binding ToolId, UpdateSourceTrigger=PropertyChanged}"
+                                Margin="0"
+                                MinHeight="34" />
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Delay before launch (seconds)" Width="240" Binding="{Binding DelayBeforeSeconds, UpdateSourceTrigger=PropertyChanged}" />
+              </DataGrid.Columns>
+            </DataGrid>
+
+            <StackPanel Grid.Row="4" Margin="0,18,0,0">
               <Button Content="Save profile" Command="{Binding SaveCommand}" HorizontalAlignment="Left" Style="{StaticResource PrimaryButtonStyle}" />
-              <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+              <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource BodySecondaryStyle}" Margin="0,10,0,0" />
             </StackPanel>
           </Grid>
         </Border>
       </Grid>
     </DataTemplate>
 
+    <!-- Settings -->
     <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-      <Grid Margin="28">
-        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" CornerRadius="10" Padding="22" HorizontalAlignment="Left" Width="520" VerticalAlignment="Top">
+      <Grid Margin="30,26,30,30">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Style="{StaticResource CardStyle}" Width="620" HorizontalAlignment="Left" Padding="26">
           <StackPanel>
-            <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold" />
-            <TextBlock Text="Theme" FontWeight="SemiBold" Margin="0,16,0,0" />
-            <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" />
-            <CheckBox Content="Start NGR Launcher with Windows" IsChecked="{Binding StartWithWindows}" Margin="0,10,0,16" />
-            <TextBlock Text="Startup registration is persisted here; Windows startup wiring is completed in Phase 4." Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+            <TextBlock Text="Appearance &amp; startup" Style="{StaticResource SectionTitleStyle}" />
+            <TextBlock Text="Keep the launcher comfortable in light or dark environments." Style="{StaticResource BodySecondaryStyle}" Margin="0,4,0,24" />
+
+            <TextBlock Text="THEME" Style="{StaticResource LabelStyle}" />
+            <ComboBox Width="260" HorizontalAlignment="Left" ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" />
+
+            <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="0,4,0,20" />
+
+            <CheckBox Content="Start NGR Launcher with Windows" IsChecked="{Binding StartWithWindows}" Margin="0,0,0,8" />
+            <TextBlock Text="The preference is saved now. Windows startup registration will be wired in the next lifecycle milestone."
+                       Style="{StaticResource BodySecondaryStyle}"
+                       Margin="26,0,0,20" />
+
             <Button Content="Save settings" Command="{Binding SaveCommand}" HorizontalAlignment="Left" Style="{StaticResource PrimaryButtonStyle}" />
-            <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,8,0,0" />
+            <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource BodySecondaryStyle}" Margin="0,10,0,0" />
           </StackPanel>
         </Border>
       </Grid>
@@ -292,34 +631,81 @@
 
   <Grid>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="220" />
+      <ColumnDefinition Width="244" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
-    <Border Background="#172033">
-      <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Top" Margin="14,24,14,18">
-          <TextBlock Text="NGR" Foreground="White" FontSize="24" FontWeight="Bold" Margin="10,0" />
-          <TextBlock Text="Launcher" Foreground="#94A3B8" FontSize="13" Margin="10,0,10,18" />
+    <!-- Navigation rail -->
+    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,1,0">
+      <DockPanel LastChildFill="True" Margin="16,20,16,18">
+        <StackPanel DockPanel.Dock="Top">
+          <Grid Margin="4,0,4,28">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="46" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource SystemAccentColorPrimaryBrush}">
+              <TextBlock Text="N" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+              <TextBlock Text="NGR Launcher" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontSize="15" FontWeight="SemiBold" />
+              <TextBlock Text="Local workspace" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" Margin="0,2,0,0" />
+            </StackPanel>
+          </Grid>
+
+          <TextBlock Text="WORKSPACE" Style="{StaticResource LabelStyle}" Margin="14,0,0,7" />
           <Button Content="Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" Style="{StaticResource NavButtonStyle}" />
           <Button Content="Tool Library" Command="{Binding NavigateCommand}" CommandParameter="Tools" Style="{StaticResource NavButtonStyle}" />
           <Button Content="Profiles" Command="{Binding NavigateCommand}" CommandParameter="Profiles" Style="{StaticResource NavButtonStyle}" />
+
+          <TextBlock Text="PREFERENCES" Style="{StaticResource LabelStyle}" Margin="14,22,0,7" />
           <Button Content="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" Style="{StaticResource NavButtonStyle}" />
         </StackPanel>
-        <TextBlock DockPanel.Dock="Bottom" Text="Local · Windows 10/11" Foreground="#64748B" Margin="24,0,0,22" />
+
+        <Border DockPanel.Dock="Bottom"
+                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                CornerRadius="12"
+                Padding="12">
+          <StackPanel>
+            <TextBlock Text="Runs locally" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontSize="12" FontWeight="SemiBold" />
+            <TextBlock Text="Windows 10/11 · JSON config" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" Margin="0,3,0,0" />
+          </StackPanel>
+        </Border>
       </DockPanel>
     </Border>
 
-    <Grid Grid.Column="1">
+    <!-- Main surface -->
+    <Grid Grid.Column="1" Background="{DynamicResource ApplicationBackgroundBrush}">
       <Grid.RowDefinitions>
-        <RowDefinition Height="70" />
+        <RowDefinition Height="84" />
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
-      <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+
+      <Border Background="{DynamicResource ApplicationBackgroundBrush}"
               BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
               BorderThickness="0,0,0,1">
-        <TextBlock Text="{Binding CurrentTitle}" FontSize="23" FontWeight="SemiBold" VerticalAlignment="Center" Margin="28,0" />
+        <Grid Margin="30,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{Binding CurrentTitle}" Style="{StaticResource PageTitleStyle}" />
+            <TextBlock Text="Manage tools and launch repeatable workspaces." Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,3,0,0" />
+          </StackPanel>
+          <Border Grid.Column="1"
+                  BorderBrush="{DynamicResource SystemAccentColorPrimaryBrush}"
+                  BorderThickness="1"
+                  CornerRadius="12"
+                  Padding="10,5"
+                  VerticalAlignment="Center">
+            <TextBlock Text="LOCAL" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" FontSize="11" FontWeight="Bold" />
+          </Border>
+        </Grid>
       </Border>
+
       <ContentControl Grid.Row="1" Content="{Binding CurrentPage}" />
     </Grid>
   </Grid>
