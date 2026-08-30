@@ -10,14 +10,19 @@ public sealed class SettingsViewModel : ObservableObject
 {
     private readonly LauncherWorkspace _workspace;
     private readonly IUiDispatcher _dispatcher;
+    private readonly IThemeService _themeService;
     private ThemePreference _theme;
     private bool _startWithWindows;
     private string _statusMessage = string.Empty;
 
-    public SettingsViewModel(LauncherWorkspace workspace, IUiDispatcher dispatcher)
+    public SettingsViewModel(
+        LauncherWorkspace workspace,
+        IUiDispatcher dispatcher,
+        IThemeService themeService)
     {
         _workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+        _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
         Themes = Enum.GetValues<ThemePreference>();
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         _workspace.Changed += (_, _) => _dispatcher.Invoke(RefreshFromWorkspace);
@@ -57,6 +62,7 @@ public sealed class SettingsViewModel : ObservableObject
                 StartupPromptAnswered = true
             };
             await _workspace.UpdateSettingsAsync(settings);
+            _themeService.Apply(settings.Theme);
             StatusMessage = "Settings saved";
         }
         catch (Exception exception)
