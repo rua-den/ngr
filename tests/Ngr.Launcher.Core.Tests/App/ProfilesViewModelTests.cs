@@ -10,7 +10,7 @@ namespace Ngr.Launcher.Core.Tests.App;
 public sealed class ProfilesViewModelTests
 {
     [Fact]
-    public async Task Profile_editor_persists_step_order_and_delays()
+    public async Task Profile_editor_generates_id_and_persists_step_order_and_delays()
     {
         var directory = Directory.CreateTempSubdirectory("ngr-launcher-profile-vm-").FullName;
         try
@@ -19,13 +19,9 @@ public sealed class ProfilesViewModelTests
             await workspace.InitializeAsync();
             await workspace.SaveToolAsync(null, Command("one"));
             await workspace.SaveToolAsync(null, Command("two"));
-            var viewModel = new ProfilesViewModel(
-                workspace,
-                new AlwaysConfirm(),
-                new InlineUiDispatcher());
+            var viewModel = CreateViewModel(workspace);
 
-            viewModel.Id = "startup";
-            viewModel.Name = "Startup";
+            viewModel.Name = "Startup Stack";
             viewModel.AddStep();
             viewModel.Steps[0].ToolId = "one";
             viewModel.Steps[0].DelayBeforeSeconds = 2;
@@ -35,9 +31,12 @@ public sealed class ProfilesViewModelTests
             viewModel.SelectedStep = viewModel.Steps[1];
             viewModel.MoveSelectedStepUp();
 
+            Assert.Equal("startup-stack", viewModel.Id);
+            Assert.True(viewModel.CanSave);
             await viewModel.SaveAsync();
 
             var profile = Assert.Single(workspace.Configuration.Profiles);
+            Assert.Equal("startup-stack", profile.Id);
             Assert.Equal(new[] { "two", "one" }, profile.Steps.Select(step => step.ToolId));
             Assert.Equal(new[] { 7, 2 }, profile.Steps.Select(step => step.DelayBeforeSeconds));
         }
@@ -46,6 +45,57 @@ public sealed class ProfilesViewModelTests
             Directory.Delete(directory, recursive: true);
         }
     }
+
+    [Fact]
+    public async Task Profile_editor_explains_that_a_tool_is_required_before_steps_can_be_added()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-profile-empty-").FullName;
+        try
+        {
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            var viewModel = CreateViewModel(workspace);
+
+            viewModel.Name = "Startup";
+            viewModel.AddStep();
+
+            Assert.True(viewModel.HasNoAvailableTools);
+            Assert.Empty(viewModel.Steps);
+            Assert.False(viewModel.CanSave);
+            Assert.Contains("tool", viewModel.StatusMessage, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Delay_outside_supported_range_disables_save_immediately()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-profile-delay-").FullName;
+        try
+        {
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            await workspace.SaveToolAsync(null, Command("one"));
+            var viewModel = CreateViewModel(workspace);
+
+            viewModel.Name = "Startup";
+            viewModel.AddStep();
+            viewModel.Steps[0].DelayBeforeSeconds = 301;
+
+            Assert.False(viewModel.CanSave);
+            Assert.Contains("300", viewModel.ValidationMessage, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private static ProfilesViewModel CreateViewModel(LauncherWorkspace workspace) =>
+        new(workspace, new AlwaysConfirm(), new InlineUiDispatcher());
 
     private static ToolDefinition Command(string id) => new()
     {
