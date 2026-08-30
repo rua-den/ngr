@@ -34,11 +34,12 @@ public partial class App : System.Windows.Application
             var runner = new ProfileRunner(spawner, new SystemDelay());
             var confirmation = new WpfConfirmationService();
             var dispatcher = new WpfUiDispatcher();
+            var pathPicker = new WpfPathPickerService();
             var themeService = new WpfThemeService();
             themeService.Apply(workspace.Configuration.Settings.Theme);
 
             var dashboard = new DashboardViewModel(workspace, runner, cancellations, dispatcher);
-            var tools = new ToolLibraryViewModel(workspace, spawner, confirmation, dispatcher);
+            var tools = new ToolLibraryViewModel(workspace, spawner, confirmation, dispatcher, pathPicker);
             var profiles = new ProfilesViewModel(workspace, confirmation, dispatcher);
             var settings = new SettingsViewModel(workspace, dispatcher, themeService);
             var mainViewModel = new MainViewModel(dashboard, tools, profiles, settings);

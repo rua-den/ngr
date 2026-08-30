@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using System.IO;
 using System.Windows;
+using Microsoft.Win32;
 using Ngr.Launcher.Core.Execution;
 
 namespace Ngr.Launcher.App.Services;
@@ -18,6 +20,60 @@ public sealed class WpfConfirmationService : IConfirmationService
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning,
             MessageBoxResult.No) == MessageBoxResult.Yes;
+}
+
+public interface IPathPickerService
+{
+    string? PickApplicationTarget(string? currentPath = null);
+    string? PickFolder(string? currentPath = null);
+}
+
+public sealed class WpfPathPickerService : IPathPickerService
+{
+    public string? PickApplicationTarget(string? currentPath = null)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Choose an application or file",
+            CheckFileExists = true,
+            Multiselect = false,
+            Filter = "Applications and shortcuts|*.exe;*.com;*.bat;*.cmd;*.lnk|All files|*.*"
+        };
+
+        if (!string.IsNullOrWhiteSpace(currentPath))
+        {
+            if (File.Exists(currentPath))
+            {
+                dialog.FileName = currentPath;
+            }
+            else
+            {
+                var directory = Path.GetDirectoryName(currentPath);
+                if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
+                {
+                    dialog.InitialDirectory = directory;
+                }
+            }
+        }
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? PickFolder(string? currentPath = null)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Choose a working directory",
+            Multiselect = false
+        };
+
+        if (!string.IsNullOrWhiteSpace(currentPath) && Directory.Exists(currentPath))
+        {
+            dialog.InitialDirectory = currentPath;
+        }
+
+        return dialog.ShowDialog() == true ? dialog.FolderName : null;
+    }
 }
 
 public interface IUiDispatcher
