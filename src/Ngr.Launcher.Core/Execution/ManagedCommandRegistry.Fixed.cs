@@ -17,6 +17,7 @@ public sealed class ManagedCommandRegistry(IProfileSessionCoordinator? sessionCo
     private readonly object _gate = new();
     private readonly Dictionary<string, List<IManagedProcess>> _live = new(StringComparer.Ordinal);
     private readonly IProfileSessionCoordinator? _sessionCoordinator = sessionCoordinator;
+    private bool _isStopped;
 
     public void Register(string toolId, IManagedProcess process)
     {
@@ -25,6 +26,12 @@ public sealed class ManagedCommandRegistry(IProfileSessionCoordinator? sessionCo
 
         lock (_gate)
         {
+            if (_isStopped)
+            {
+                SafeKill(process);
+                return;
+            }
+
             if (!_live.TryGetValue(toolId, out var instances))
             {
                 instances = [];
@@ -32,9 +39,8 @@ public sealed class ManagedCommandRegistry(IProfileSessionCoordinator? sessionCo
             }
 
             instances.Add(process);
+            process.Exited += HandleExit;
         }
-
-        process.Exited += HandleExit;
 
         void HandleExit(object? sender, EventArgs eventArgs)
         {
@@ -64,24 +70,38 @@ public sealed class ManagedCommandRegistry(IProfileSessionCoordinator? sessionCo
 
     public void StopAll()
     {
-        _sessionCoordinator?.CancelAll();
+        try
+        {
+            _sessionCoordinator?.CancelAll();
+        }
+        catch
+        {
+            // Command shutdown remains best-effort even if session cancellation reports an error.
+        }
 
         IManagedProcess[] snapshot;
         lock (_gate)
         {
+            _isStopped = true;
             snapshot = _live.Values.SelectMany(instances => instances).ToArray();
+            _live.Clear();
         }
 
         foreach (var process in snapshot)
         {
-            try
-            {
-                process.KillTree();
-            }
-            catch
-            {
-                // Best effort: one process must not prevent the remaining trees from stopping.
-            }
+            SafeKill(process);
+        }
+    }
+
+    private static void SafeKill(IManagedProcess process)
+    {
+        try
+        {
+            process.KillTree();
+        }
+        catch
+        {
+            // One process must not prevent the remaining process trees from stopping.
         }
     }
 

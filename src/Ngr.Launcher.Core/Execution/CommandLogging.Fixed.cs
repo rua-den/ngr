@@ -30,55 +30,79 @@ public sealed class CappedCommandLog : IDisposable
 {
     public const string TruncationMarker = "[output truncated]";
 
+    private readonly object _gate = new();
     private readonly StreamWriter _writer;
-    private readonly long _maxContentBytes;
-    private long _contentBytes;
+    private readonly long _maxPhysicalBytes;
+    private readonly int _markerBytes;
+    private long _physicalBytes;
     private bool _isTruncated;
     private bool _isDisposed;
 
     public CappedCommandLog(Stream stream, long maxContentBytes)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        ArgumentOutOfRangeException.ThrowIfNegative(maxContentBytes);
 
-        _maxContentBytes = maxContentBytes;
-        _writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-            bufferSize: 1024, leaveOpen: true);
+        var markerBytes = Encoding.UTF8.GetByteCount(TruncationMarker + Environment.NewLine);
+        if (maxContentBytes < markerBytes)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maxContentBytes),
+                maxContentBytes,
+                "The log cap must have room for the complete truncation marker and newline.");
+        }
+
+        _maxPhysicalBytes = maxContentBytes;
+        _markerBytes = markerBytes;
+        _physicalBytes = stream.CanSeek ? stream.Length : 0;
+        _writer = new StreamWriter(
+            stream,
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            bufferSize: 1024,
+            leaveOpen: true);
     }
 
     public void Write(string line)
     {
-        ObjectDisposedException.ThrowIf(_isDisposed, this);
         ArgumentNullException.ThrowIfNull(line);
 
-        if (_isTruncated)
+        lock (_gate)
         {
-            return;
-        }
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
 
-        var contentBytes = Encoding.UTF8.GetByteCount(line);
-        if (_contentBytes + contentBytes <= _maxContentBytes)
-        {
-            _writer.WriteLine(line);
+            if (_isTruncated)
+            {
+                return;
+            }
+
+            var lineBytes = Encoding.UTF8.GetByteCount(line + _writer.NewLine);
+            var contentLimit = _maxPhysicalBytes - _markerBytes;
+            if (_physicalBytes + lineBytes <= contentLimit)
+            {
+                _writer.WriteLine(line);
+                _writer.Flush();
+                _physicalBytes += lineBytes;
+                return;
+            }
+
+            _writer.WriteLine(TruncationMarker);
             _writer.Flush();
-            _contentBytes += contentBytes;
-            return;
+            _physicalBytes += _markerBytes;
+            _isTruncated = true;
         }
-
-        _writer.WriteLine(TruncationMarker);
-        _writer.Flush();
-        _isTruncated = true;
     }
 
     public void Dispose()
     {
-        if (_isDisposed)
+        lock (_gate)
         {
-            return;
-        }
+            if (_isDisposed)
+            {
+                return;
+            }
 
-        _writer.Dispose();
-        _isDisposed = true;
+            _writer.Dispose();
+            _isDisposed = true;
+        }
     }
 }
 

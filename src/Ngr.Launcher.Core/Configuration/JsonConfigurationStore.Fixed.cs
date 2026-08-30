@@ -24,6 +24,7 @@ public sealed class JsonConfigurationStore
     private readonly string _configurationPath;
     private readonly string _backupPath;
     private readonly string _temporaryPath;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
 
     public JsonConfigurationStore(string dataDirectory)
     {
@@ -39,24 +40,34 @@ public sealed class JsonConfigurationStore
         CancellationToken cancellationToken = default)
     {
         AppConfigurationValidator.Validate(configuration);
-        Directory.CreateDirectory(_dataDirectory);
+        await _saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         try
         {
-            await WriteConfigurationAsync(_temporaryPath, configuration, cancellationToken);
+            Directory.CreateDirectory(_dataDirectory);
 
-            if (File.Exists(_configurationPath))
+            try
             {
-                File.Replace(_temporaryPath, _configurationPath, _backupPath, ignoreMetadataErrors: true);
+                await WriteConfigurationAsync(_temporaryPath, configuration, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (File.Exists(_configurationPath))
+                {
+                    File.Replace(_temporaryPath, _configurationPath, _backupPath, ignoreMetadataErrors: true);
+                }
+                else
+                {
+                    File.Move(_temporaryPath, _configurationPath);
+                }
             }
-            else
+            finally
             {
-                File.Move(_temporaryPath, _configurationPath);
+                File.Delete(_temporaryPath);
             }
         }
         finally
         {
-            File.Delete(_temporaryPath);
+            _saveGate.Release();
         }
     }
 

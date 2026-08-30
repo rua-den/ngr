@@ -165,18 +165,8 @@ public sealed class SystemCommandSpawner : ICommandSpawner
 
     private static string SafePathSegment(string toolId)
     {
-        var invalidCharacters = Path.GetInvalidFileNameChars().ToHashSet();
-        var sanitized = new string(toolId
-            .Select(character => invalidCharacters.Contains(character) ? '_' : character)
-            .ToArray());
-
-        if (string.IsNullOrWhiteSpace(sanitized) || sanitized is "." or "..")
-        {
-            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(toolId)));
-            return $"tool-{hash[..12]}";
-        }
-
-        return sanitized;
+        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(toolId)));
+        return $"tool-{hash[..24]}";
     }
 
     private static void TryKillTree(Process process)
