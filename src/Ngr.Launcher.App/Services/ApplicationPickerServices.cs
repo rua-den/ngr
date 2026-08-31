@@ -27,9 +27,7 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
     {
     }
 
-    public WindowsInstalledApplicationCatalog(
-        IEnumerable<string> startMenuRoots,
-        bool includeRegistry)
+    public WindowsInstalledApplicationCatalog(IEnumerable<string> startMenuRoots, bool includeRegistry)
     {
         ArgumentNullException.ThrowIfNull(startMenuRoots);
         _startMenuRoots = startMenuRoots
@@ -43,7 +41,6 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
     public IReadOnlyList<InstalledApplicationEntry> Discover()
     {
         var byTarget = new Dictionary<string, InstalledApplicationEntry>(StringComparer.OrdinalIgnoreCase);
-
         foreach (var root in _startMenuRoots)
         {
             AddStartMenuEntries(root, byTarget);
@@ -60,18 +57,13 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
             .ToArray();
     }
 
-    private static IReadOnlyList<string> GetDefaultStartMenuRoots()
-    {
-        return
-        [
-            Environment.GetFolderPath(Environment.SpecialFolder.Programs),
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms)
-        ];
-    }
+    private static IReadOnlyList<string> GetDefaultStartMenuRoots() =>
+    [
+        Environment.GetFolderPath(Environment.SpecialFolder.Programs),
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms)
+    ];
 
-    private static void AddStartMenuEntries(
-        string root,
-        IDictionary<string, InstalledApplicationEntry> byTarget)
+    private static void AddStartMenuEntries(string root, IDictionary<string, InstalledApplicationEntry> byTarget)
     {
         if (!Directory.Exists(root))
         {
@@ -94,9 +86,7 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
             }
 
             var target = Path.GetFullPath(file);
-            byTarget.TryAdd(
-                target,
-                new InstalledApplicationEntry(name, target, "Start menu"));
+            byTarget.TryAdd(target, new InstalledApplicationEntry(name, target, "Start menu"));
         }
     }
 
@@ -104,11 +94,9 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
     {
         var pending = new Stack<string>();
         pending.Push(root);
-
         while (pending.Count > 0)
         {
             var directory = pending.Pop();
-
             string[] files;
             try
             {
@@ -141,25 +129,20 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
         }
     }
 
-    private static bool LooksLikeMaintenanceShortcut(string name)
-    {
-        return name.Contains("uninstall", StringComparison.OrdinalIgnoreCase)
-            || name.Contains("readme", StringComparison.OrdinalIgnoreCase)
-            || name.Contains("release notes", StringComparison.OrdinalIgnoreCase)
-            || name.Contains("help", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool LooksLikeMaintenanceShortcut(string name) =>
+        name.Contains("uninstall", StringComparison.OrdinalIgnoreCase)
+        || name.Contains("readme", StringComparison.OrdinalIgnoreCase)
+        || name.Contains("release notes", StringComparison.OrdinalIgnoreCase)
+        || name.Contains("help", StringComparison.OrdinalIgnoreCase);
 
-    private static void AddRegistryEntries(
-        IDictionary<string, InstalledApplicationEntry> byTarget)
+    private static void AddRegistryEntries(IDictionary<string, InstalledApplicationEntry> byTarget)
     {
         foreach (var (hive, view) in RegistryLocations())
         {
             try
             {
                 using var baseKey = RegistryKey.OpenBaseKey(hive, view);
-                using var appPaths = baseKey.OpenSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\App Paths",
-                    writable: false);
+                using var appPaths = baseKey.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\App Paths", writable: false);
                 if (appPaths is null)
                 {
                     continue;
@@ -178,9 +161,7 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
                         }
 
                         var name = GetExecutableDisplayName(path, subKeyName);
-                        byTarget.TryAdd(
-                            path,
-                            new InstalledApplicationEntry(name, path, "Windows app registration"));
+                        byTarget.TryAdd(path, new InstalledApplicationEntry(name, path, "Windows app registration"));
                     }
                     catch (Exception exception) when (
                         exception is IOException
@@ -219,10 +200,7 @@ public sealed class WindowsInstalledApplicationCatalog : IInstalledApplicationCa
         {
             return Path.GetFullPath(candidate);
         }
-        catch (Exception exception) when (
-            exception is ArgumentException
-            or NotSupportedException
-            or PathTooLongException)
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
         {
             return null;
         }
@@ -261,12 +239,9 @@ internal sealed class InstalledApplicationPickerWindow : Window
     private readonly TextBlock _summaryText;
     private readonly TextBlock _selectedTargetText;
 
-    public InstalledApplicationPickerWindow(
-        IReadOnlyList<InstalledApplicationEntry> applications,
-        string? currentTarget)
+    public InstalledApplicationPickerWindow(IReadOnlyList<InstalledApplicationEntry> applications, string? currentTarget)
     {
         _allApplications = applications ?? throw new ArgumentNullException(nameof(applications));
-
         Title = "Choose installed app";
         Width = 720;
         Height = 580;
@@ -279,13 +254,8 @@ internal sealed class InstalledApplicationPickerWindow : Window
         SetResourceReference(BackgroundProperty, "ApplicationBackgroundBrush");
         SetResourceReference(ForegroundProperty, "TextFillColorPrimaryBrush");
 
-        _searchBox = new TextBox
-        {
-            MinHeight = 38,
-            Margin = new Thickness(0, 0, 0, 10)
-        };
+        _searchBox = new TextBox { MinHeight = 38, Margin = new Thickness(0, 0, 0, 10) };
         _searchBox.TextChanged += (_, _) => RefreshList();
-
         _applicationList = new ListBox
         {
             DisplayMemberPath = nameof(InstalledApplicationEntry.DisplayText),
@@ -293,7 +263,6 @@ internal sealed class InstalledApplicationPickerWindow : Window
         };
         _applicationList.SelectionChanged += (_, _) => UpdateSelectedTarget();
         _applicationList.MouseDoubleClick += (_, _) => UseSelection();
-
         _summaryText = CreateSecondaryText();
         _selectedTargetText = CreateSecondaryText();
         _selectedTargetText.TextWrapping = TextWrapping.Wrap;
@@ -307,7 +276,10 @@ internal sealed class InstalledApplicationPickerWindow : Window
             {
                 _applicationList.SelectedItem = _allApplications.FirstOrDefault(entry =>
                     string.Equals(entry.Target, currentTarget, StringComparison.OrdinalIgnoreCase));
-                _applicationList.ScrollIntoView(_applicationList.SelectedItem);
+                if (_applicationList.SelectedItem is not null)
+                {
+                    _applicationList.ScrollIntoView(_applicationList.SelectedItem);
+                }
             }
 
             _searchBox.Focus();
@@ -315,7 +287,6 @@ internal sealed class InstalledApplicationPickerWindow : Window
     }
 
     public string? SelectedTarget { get; private set; }
-
     public bool BrowseFileRequested { get; private set; }
 
     private UIElement BuildContent()
@@ -332,36 +303,34 @@ internal sealed class InstalledApplicationPickerWindow : Window
         };
         titleBar.SetResourceReference(Border.BackgroundProperty, "CardBackgroundFillColorSecondaryBrush");
         titleBar.SetResourceReference(Border.BorderBrushProperty, "DividerStrokeColorDefaultBrush");
-        titleBar.MouseLeftButtonDown += (_, eventArgs) =>
+
+        var titleGrid = new Grid();
+        titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var titleText = new TextBlock
+        {
+            Text = "Choose installed app",
+            FontWeight = FontWeights.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        titleText.MouseLeftButtonDown += (_, eventArgs) =>
         {
             if (eventArgs.ButtonState == MouseButtonState.Pressed)
             {
                 DragMove();
             }
         };
-
-        var titleGrid = new Grid();
-        titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        titleGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        titleGrid.Children.Add(new TextBlock
-        {
-            Text = "Choose installed app",
-            FontWeight = FontWeights.SemiBold,
-            VerticalAlignment = VerticalAlignment.Center
-        });
+        titleGrid.Children.Add(titleText);
 
         var closeButton = CreateButton("Close", "ToolbarButtonStyle");
-        closeButton.Padding = new Thickness(12, 4);
+        closeButton.Padding = new Thickness(12, 4, 12, 4);
         closeButton.Click += (_, _) => Close();
         Grid.SetColumn(closeButton, 1);
         titleGrid.Children.Add(closeButton);
         titleBar.Child = titleGrid;
         root.Children.Add(titleBar);
 
-        var panel = new Grid
-        {
-            Margin = new Thickness(18)
-        };
+        var panel = new Grid { Margin = new Thickness(18) };
         panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         panel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -369,12 +338,7 @@ internal sealed class InstalledApplicationPickerWindow : Window
         panel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         var heading = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
-        heading.Children.Add(new TextBlock
-        {
-            Text = "Installed apps",
-            FontSize = 20,
-            FontWeight = FontWeights.SemiBold
-        });
+        heading.Children.Add(new TextBlock { Text = "Installed apps", FontSize = 20, FontWeight = FontWeights.SemiBold });
         var help = CreateSecondaryText();
         help.Text = "Search the apps Windows already exposes in the Start menu. If the app is missing, use Browse file instead.";
         help.Margin = new Thickness(0, 5, 0, 0);
@@ -406,13 +370,7 @@ internal sealed class InstalledApplicationPickerWindow : Window
         panel.Children.Add(listBorder);
 
         var selectedPanel = new StackPanel { Margin = new Thickness(2, 10, 2, 12) };
-        var selectedLabel = new TextBlock
-        {
-            Text = "Selected target",
-            FontWeight = FontWeights.SemiBold,
-            FontSize = 11
-        };
-        selectedPanel.Children.Add(selectedLabel);
+        selectedPanel.Children.Add(new TextBlock { Text = "Selected target", FontWeight = FontWeights.SemiBold, FontSize = 11 });
         _selectedTargetText.Margin = new Thickness(0, 4, 0, 0);
         selectedPanel.Children.Add(_selectedTargetText);
         Grid.SetRow(selectedPanel, 3);
@@ -446,7 +404,6 @@ internal sealed class InstalledApplicationPickerWindow : Window
 
         Grid.SetRow(actions, 4);
         panel.Children.Add(actions);
-
         Grid.SetRow(panel, 1);
         root.Children.Add(panel);
         return root;
@@ -461,7 +418,6 @@ internal sealed class InstalledApplicationPickerWindow : Window
                 || entry.Target.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || entry.Source.Contains(query, StringComparison.OrdinalIgnoreCase))
             .ToArray();
-
         _applicationList.ItemsSource = filtered;
         _summaryText.Text = filtered.Length == 1 ? "1 app" : $"{filtered.Length} apps";
         if (filtered.Length == 0)
@@ -502,7 +458,7 @@ internal sealed class InstalledApplicationPickerWindow : Window
         var button = new Button
         {
             Content = text,
-            Padding = new Thickness(14, 6)
+            Padding = new Thickness(14, 6, 14, 6)
         };
         if (Application.Current.TryFindResource(styleKey) is Style style)
         {

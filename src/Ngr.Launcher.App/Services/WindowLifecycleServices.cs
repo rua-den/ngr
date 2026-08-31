@@ -76,7 +76,6 @@ public interface IManagedCommandShutdown
 public sealed class ManagedCommandShutdown(ManagedCommandRegistry registry) : IManagedCommandShutdown
 {
     private readonly ManagedCommandRegistry _registry = registry ?? throw new ArgumentNullException(nameof(registry));
-
     public void StopAll() => _registry.StopAll();
 }
 
@@ -170,7 +169,6 @@ public sealed class LauncherTrayIconService : NotifyIconService
     public void UpdateProfiles(IEnumerable<ProfileDefinition> profiles)
     {
         ArgumentNullException.ThrowIfNull(profiles);
-
         var menu = CreateContextMenu();
 
         var openItem = CreateMenuItem("Open NGR Launcher");
@@ -214,7 +212,6 @@ public sealed class LauncherTrayIconService : NotifyIconService
         exitItem.Foreground = System.Windows.Media.Brushes.IndianRed;
         exitItem.Click += (_, _) => _exit();
         menu.Items.Add(exitItem);
-
         ContextMenu = menu;
     }
 
@@ -245,7 +242,7 @@ public sealed class LauncherTrayIconService : NotifyIconService
         var item = new MenuItem
         {
             Header = header,
-            Padding = new Thickness(11, 7),
+            Padding = new Thickness(11, 7, 11, 7),
             Margin = new Thickness(0, 1, 0, 1)
         };
         item.SetResourceReference(Control.BackgroundProperty, "CardBackgroundFillColorDefaultBrush");
@@ -255,10 +252,7 @@ public sealed class LauncherTrayIconService : NotifyIconService
 
     private static Separator CreateSeparator()
     {
-        var separator = new Separator
-        {
-            Margin = new Thickness(4, 4, 4, 4)
-        };
+        var separator = new Separator { Margin = new Thickness(4) };
         separator.SetResourceReference(Control.BackgroundProperty, "DividerStrokeColorDefaultBrush");
         return separator;
     }
