@@ -14,9 +14,7 @@ public sealed class DashboardStepViewModel : ObservableObject
     private string? _error;
 
     public required string ToolId { get; init; }
-
     public required string ToolName { get; init; }
-
     public int DelayBeforeSeconds { get; init; }
 
     public string Status
@@ -66,7 +64,6 @@ public sealed class DashboardSessionViewModel : ObservableObject
     }
 
     public string ProfileName { get; }
-
     public ObservableCollection<DashboardStepViewModel> Steps { get; } = [];
 
     public string Status
@@ -153,26 +150,46 @@ public sealed class DashboardViewModel : ObservableObject
         _runner = runner ?? throw new ArgumentNullException(nameof(runner));
         _cancellations = cancellations ?? throw new ArgumentNullException(nameof(cancellations));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
-        LaunchCommand = new RelayCommand(LaunchSelected);
-        CancelCommand = new RelayCommand(CancelSelected);
+        LaunchCommand = new RelayCommand(LaunchSelected, () => SelectedProfile is not null);
+        CancelCommand = new RelayCommand(CancelSelected, () => SelectedSession?.CanCancel == true);
         _workspace.Changed += (_, _) => _dispatcher.Invoke(RefreshProfiles);
         RefreshProfiles();
     }
 
     public ObservableCollection<ProfileDefinition> Profiles { get; } = [];
-
     public ObservableCollection<DashboardSessionViewModel> Sessions { get; } = [];
+
+    public bool HasProfiles => Profiles.Count > 0;
+    public bool HasNoProfiles => !HasProfiles;
+    public bool HasSessions => Sessions.Count > 0;
+    public bool HasNoSessions => !HasSessions;
 
     public ProfileDefinition? SelectedProfile
     {
         get => _selectedProfile;
-        set => SetProperty(ref _selectedProfile, value);
+        set
+        {
+            if (!SetProperty(ref _selectedProfile, value))
+            {
+                return;
+            }
+
+            LaunchCommand.NotifyCanExecuteChanged();
+        }
     }
 
     public DashboardSessionViewModel? SelectedSession
     {
         get => _selectedSession;
-        set => SetProperty(ref _selectedSession, value);
+        set
+        {
+            if (!SetProperty(ref _selectedSession, value))
+            {
+                return;
+            }
+
+            CancelCommand.NotifyCanExecuteChanged();
+        }
     }
 
     public string StatusMessage
@@ -182,14 +199,13 @@ public sealed class DashboardViewModel : ObservableObject
     }
 
     public IRelayCommand LaunchCommand { get; }
-
     public IRelayCommand CancelCommand { get; }
 
     public void LaunchSelected()
     {
         if (SelectedProfile is null)
         {
-            StatusMessage = "Select a profile to launch";
+            StatusMessage = "Create or select a profile first.";
             return;
         }
 
@@ -210,6 +226,8 @@ public sealed class DashboardViewModel : ObservableObject
         {
             Sessions.Insert(0, session);
             SelectedSession = session;
+            OnPropertyChanged(nameof(HasSessions));
+            OnPropertyChanged(nameof(HasNoSessions));
             StatusMessage = $"Started {profileSnapshot.Name}";
         });
 
@@ -223,6 +241,7 @@ public sealed class DashboardViewModel : ObservableObject
             _dispatcher.Invoke(() =>
             {
                 session.ApplyResult(result);
+                CancelCommand.NotifyCanExecuteChanged();
                 StatusMessage = $"{profileSnapshot.Name}: {session.Status}";
             });
         }
@@ -231,6 +250,7 @@ public sealed class DashboardViewModel : ObservableObject
             _dispatcher.Invoke(() =>
             {
                 session.MarkFailed(exception);
+                CancelCommand.NotifyCanExecuteChanged();
                 StatusMessage = session.Status;
             });
         }
@@ -250,6 +270,7 @@ public sealed class DashboardViewModel : ObservableObject
         if (_cancellations.Cancel(SelectedSession.Id))
         {
             SelectedSession.MarkCancelling();
+            CancelCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -266,5 +287,8 @@ public sealed class DashboardViewModel : ObservableObject
             ? Profiles.FirstOrDefault()
             : Profiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedId, StringComparison.Ordinal))
                 ?? Profiles.FirstOrDefault();
+
+        OnPropertyChanged(nameof(HasProfiles));
+        OnPropertyChanged(nameof(HasNoProfiles));
     }
 }

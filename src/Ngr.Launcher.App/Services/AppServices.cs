@@ -14,12 +14,7 @@ public interface IConfirmationService
 public sealed class WpfConfirmationService : IConfirmationService
 {
     public bool Confirm(string title, string message) =>
-        MessageBox.Show(
-            message,
-            title,
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning,
-            MessageBoxResult.No) == MessageBoxResult.Yes;
+        MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
 }
 
 public interface IPathPickerService
@@ -30,14 +25,60 @@ public interface IPathPickerService
 
 public sealed class WpfPathPickerService : IPathPickerService
 {
+    private readonly IInstalledApplicationCatalog _applicationCatalog;
+    private IReadOnlyList<InstalledApplicationEntry>? _cachedApplications;
+
+    public WpfPathPickerService() : this(new WindowsInstalledApplicationCatalog())
+    {
+    }
+
+    public WpfPathPickerService(IInstalledApplicationCatalog applicationCatalog)
+    {
+        _applicationCatalog = applicationCatalog ?? throw new ArgumentNullException(nameof(applicationCatalog));
+    }
+
     public string? PickApplicationTarget(string? currentPath = null)
+    {
+        _cachedApplications ??= _applicationCatalog.Discover();
+        var picker = new InstalledApplicationPickerWindow(_cachedApplications, currentPath);
+        if (Application.Current?.MainWindow is { IsVisible: true } owner)
+        {
+            picker.Owner = owner;
+        }
+
+        var result = picker.ShowDialog();
+        if (picker.BrowseFileRequested)
+        {
+            return PickApplicationFile(currentPath);
+        }
+
+        return result == true ? picker.SelectedTarget : null;
+    }
+
+    public string? PickFolder(string? currentPath = null)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Choose a working directory",
+            Multiselect = false
+        };
+
+        if (!string.IsNullOrWhiteSpace(currentPath) && Directory.Exists(currentPath))
+        {
+            dialog.InitialDirectory = currentPath;
+        }
+
+        return dialog.ShowDialog() == true ? dialog.FolderName : null;
+    }
+
+    private static string? PickApplicationFile(string? currentPath)
     {
         var dialog = new OpenFileDialog
         {
             Title = "Choose an application or file",
             CheckFileExists = true,
             Multiselect = false,
-            Filter = "Applications and shortcuts|*.exe;*.com;*.bat;*.cmd;*.lnk|All files|*.*"
+            Filter = "Applications and shortcuts|*.exe;*.com;*.bat;*.cmd;*.lnk;*.url|All files|*.*"
         };
 
         if (!string.IsNullOrWhiteSpace(currentPath))
@@ -57,22 +98,6 @@ public sealed class WpfPathPickerService : IPathPickerService
         }
 
         return dialog.ShowDialog() == true ? dialog.FileName : null;
-    }
-
-    public string? PickFolder(string? currentPath = null)
-    {
-        var dialog = new OpenFolderDialog
-        {
-            Title = "Choose a working directory",
-            Multiselect = false
-        };
-
-        if (!string.IsNullOrWhiteSpace(currentPath) && Directory.Exists(currentPath))
-        {
-            dialog.InitialDirectory = currentPath;
-        }
-
-        return dialog.ShowDialog() == true ? dialog.FolderName : null;
     }
 }
 

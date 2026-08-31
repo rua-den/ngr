@@ -9,13 +9,9 @@ namespace Ngr.Launcher.App.Services;
 public interface IManagementWindow
 {
     bool IsVisible { get; }
-
     WindowState WindowState { get; set; }
-
     void Show();
-
     void Hide();
-
     bool Activate();
 }
 
@@ -32,9 +28,7 @@ public sealed class WpfManagementWindow(Window window) : IManagementWindow
     }
 
     public void Show() => _window.Show();
-
     public void Hide() => _window.Hide();
-
     public bool Activate() => _window.Activate();
 }
 
@@ -148,7 +142,6 @@ public sealed class ApplicationExitController
         }
         catch
         {
-            // Shutdown must continue even if one cleanup step fails.
         }
     }
 }
@@ -178,14 +171,14 @@ public sealed class LauncherTrayIconService : NotifyIconService
     {
         ArgumentNullException.ThrowIfNull(profiles);
 
-        var menu = new ContextMenu();
+        var menu = CreateContextMenu();
 
-        var openItem = new MenuItem { Header = "Open NGR Launcher" };
+        var openItem = CreateMenuItem("Open NGR Launcher");
+        openItem.FontWeight = FontWeights.SemiBold;
         openItem.Click += (_, _) => _openWindow();
         menu.Items.Add(openItem);
-        menu.Items.Add(new Separator());
+        menu.Items.Add(CreateSeparator());
 
-        var profilesItem = new MenuItem { Header = "Profiles" };
         var profileSnapshots = profiles
             .OrderBy(profile => profile.Name, StringComparer.OrdinalIgnoreCase)
             .Select(profile => profile with
@@ -196,30 +189,29 @@ public sealed class LauncherTrayIconService : NotifyIconService
 
         if (profileSnapshots.Length == 0)
         {
-            profilesItem.Items.Add(new MenuItem
-            {
-                Header = "No profiles",
-                IsEnabled = false
-            });
+            var empty = CreateMenuItem("No profiles yet");
+            empty.IsEnabled = false;
+            menu.Items.Add(empty);
         }
         else
         {
+            var section = CreateMenuItem("RUN PROFILE");
+            section.IsEnabled = false;
+            section.FontSize = 10.5;
+            menu.Items.Add(section);
+
             foreach (var profile in profileSnapshots)
             {
-                var profileItem = new MenuItem
-                {
-                    Header = profile.Name,
-                    ToolTip = profile.Id
-                };
+                var profileItem = CreateMenuItem(profile.Name);
+                profileItem.ToolTip = $"Run profile: {profile.Name}";
                 profileItem.Click += (_, _) => _launchProfile(profile);
-                profilesItem.Items.Add(profileItem);
+                menu.Items.Add(profileItem);
             }
         }
 
-        menu.Items.Add(profilesItem);
-        menu.Items.Add(new Separator());
-
-        var exitItem = new MenuItem { Header = "Exit" };
+        menu.Items.Add(CreateSeparator());
+        var exitItem = CreateMenuItem("Exit NGR Launcher");
+        exitItem.Foreground = System.Windows.Media.Brushes.IndianRed;
         exitItem.Click += (_, _) => _exit();
         menu.Items.Add(exitItem);
 
@@ -230,5 +222,44 @@ public sealed class LauncherTrayIconService : NotifyIconService
     {
         base.OnLeftClick();
         _openWindow();
+    }
+
+    private static ContextMenu CreateContextMenu()
+    {
+        var menu = new ContextMenu
+        {
+            MinWidth = 220,
+            Padding = new Thickness(5),
+            BorderThickness = new Thickness(1),
+            FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+            FontSize = 12.5
+        };
+        menu.SetResourceReference(Control.BackgroundProperty, "CardBackgroundFillColorDefaultBrush");
+        menu.SetResourceReference(Control.ForegroundProperty, "TextFillColorPrimaryBrush");
+        menu.SetResourceReference(Control.BorderBrushProperty, "ControlStrokeColorDefaultBrush");
+        return menu;
+    }
+
+    private static MenuItem CreateMenuItem(string header)
+    {
+        var item = new MenuItem
+        {
+            Header = header,
+            Padding = new Thickness(11, 7),
+            Margin = new Thickness(0, 1, 0, 1)
+        };
+        item.SetResourceReference(Control.BackgroundProperty, "CardBackgroundFillColorDefaultBrush");
+        item.SetResourceReference(Control.ForegroundProperty, "TextFillColorPrimaryBrush");
+        return item;
+    }
+
+    private static Separator CreateSeparator()
+    {
+        var separator = new Separator
+        {
+            Margin = new Thickness(4, 4, 4, 4)
+        };
+        separator.SetResourceReference(Control.BackgroundProperty, "DividerStrokeColorDefaultBrush");
+        return separator;
     }
 }

@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Ngr.Launcher.App.ViewModels"
         Title="NGR Launcher"
-        Width="1280"
-        Height="820"
-        MinWidth="1080"
-        MinHeight="680"
+        Width="1240"
+        Height="800"
+        MinWidth="1040"
+        MinHeight="650"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource ApplicationBackgroundBrush}"
         Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -20,17 +20,40 @@
     <DataTemplate x:Key="DashboardSidebarTemplate" DataType="{x:Type vm:DashboardViewModel}">
       <Grid>
         <Grid.RowDefinitions>
-          <RowDefinition Height="44" />
+          <RowDefinition Height="46" />
           <RowDefinition Height="*" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
-          <TextBlock Text="RUN PROFILES" Style="{StaticResource SidebarHeaderStyle}" VerticalAlignment="Center" Margin="14,0" />
+          <TextBlock Text="PROFILES" Style="{StaticResource SidebarHeaderStyle}" VerticalAlignment="Center" Margin="14,0" />
         </Border>
-        <ListBox Grid.Row="1" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" DisplayMemberPath="Name" ItemContainerStyle="{StaticResource SidebarListItemStyle}" Margin="0,4" />
+        <Grid Grid.Row="1">
+          <ListBox ItemsSource="{Binding Profiles}"
+                   SelectedItem="{Binding SelectedProfile}"
+                   DisplayMemberPath="Name"
+                   ItemContainerStyle="{StaticResource SidebarListItemStyle}"
+                   Margin="4,6" />
+          <StackPanel Visibility="{Binding HasNoProfiles, Converter={StaticResource BooleanToVisibilityConverter}}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Margin="20">
+            <TextBlock Text="No profiles yet" FontWeight="SemiBold" HorizontalAlignment="Center" />
+            <TextBlock Text="Create tools first, then build a profile."
+                       Style="{StaticResource SecondaryTextStyle}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       Margin="0,6,0,0" />
+          </StackPanel>
+        </Grid>
         <Border Grid.Row="2" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="10">
-          <Button Command="{Binding LaunchCommand}" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Stretch" ToolTip="Run selected profile">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"><Path Data="{StaticResource CodiconPlay}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" /><TextBlock Text="Run selected" VerticalAlignment="Center" /></StackPanel>
+          <Button Command="{Binding LaunchCommand}"
+                  Style="{StaticResource PrimaryButtonStyle}"
+                  HorizontalAlignment="Stretch"
+                  ToolTip="Run the selected profile">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+              <Path Data="{StaticResource CodiconPlay}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" />
+              <TextBlock Text="Run selected profile" />
+            </StackPanel>
           </Button>
         </Border>
       </Grid>
@@ -38,21 +61,43 @@
 
     <DataTemplate x:Key="ToolsSidebarTemplate" DataType="{x:Type vm:ToolLibraryViewModel}">
       <Grid>
-        <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="46" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
           <Grid Margin="10,0">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBlock Text="TOOLS" Style="{StaticResource SidebarHeaderStyle}" VerticalAlignment="Center" Margin="4,0" />
-            <Button Grid.Column="1" Command="{Binding NewCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,5,6,5" ToolTip="New tool"><Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" /></Button>
-            <Button Grid.Column="2" Command="{Binding DeleteCommand}" Style="{StaticResource IconButtonStyle}" Foreground="#F06A6A" Margin="0,5,0,5" ToolTip="Delete selected tool"><Path Data="{StaticResource CodiconTrash}" Style="{StaticResource ButtonIconStyle}" /></Button>
+            <Button Grid.Column="1" Command="{Binding NewCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,5,7,5" ToolTip="Create a new tool">
+              <Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" />
+            </Button>
+            <Button Grid.Column="2" Command="{Binding DeleteCommand}" Style="{StaticResource IconButtonStyle}" Foreground="#F06A6A" Margin="0,5,0,5" ToolTip="Delete selected tool">
+              <Path Data="{StaticResource CodiconTrash}" Style="{StaticResource ButtonIconStyle}" />
+            </Button>
           </Grid>
         </Border>
-        <ListBox Grid.Row="1" ItemsSource="{Binding Tools}" SelectedItem="{Binding SelectedTool}" DisplayMemberPath="Name" ItemContainerStyle="{StaticResource SidebarListItemStyle}" Margin="0,4" />
+        <ListBox Grid.Row="1"
+                 ItemsSource="{Binding Tools}"
+                 SelectedItem="{Binding SelectedTool}"
+                 DisplayMemberPath="Name"
+                 ItemContainerStyle="{StaticResource SidebarListItemStyle}"
+                 Margin="4,6" />
         <Border Grid.Row="2" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="12">
           <StackPanel>
             <TextBlock Text="QUICK START" Style="{StaticResource SidebarHeaderStyle}" Margin="2,0,0,8" />
             <ComboBox ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}" DisplayMemberPath="Name" Margin="0,0,0,9" />
-            <Button Command="{Binding ApplyTemplateCommand}" Style="{StaticResource ToolbarButtonStyle}" HorizontalAlignment="Stretch"><StackPanel Orientation="Horizontal" HorizontalAlignment="Center"><Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" /><TextBlock Text="Use template" /></StackPanel></Button>
+            <Button Command="{Binding ApplyTemplateCommand}" Style="{StaticResource ToolbarButtonStyle}" HorizontalAlignment="Stretch">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" />
+                <TextBlock Text="Use template" />
+              </StackPanel>
+            </Button>
           </StackPanel>
         </Border>
       </Grid>
@@ -60,107 +105,454 @@
 
     <DataTemplate x:Key="ProfilesSidebarTemplate" DataType="{x:Type vm:ProfilesViewModel}">
       <Grid>
-        <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="46" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
           <Grid Margin="10,0">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBlock Text="PROFILES" Style="{StaticResource SidebarHeaderStyle}" VerticalAlignment="Center" Margin="4,0" />
-            <Button Grid.Column="1" Command="{Binding NewCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,5,6,5" ToolTip="New profile"><Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" /></Button>
-            <Button Grid.Column="2" Command="{Binding DeleteCommand}" Style="{StaticResource IconButtonStyle}" Foreground="#F06A6A" Margin="0,5,0,5" ToolTip="Delete selected profile"><Path Data="{StaticResource CodiconTrash}" Style="{StaticResource ButtonIconStyle}" /></Button>
+            <Button Grid.Column="1" Command="{Binding NewCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,5,7,5" ToolTip="Create a new profile">
+              <Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" />
+            </Button>
+            <Button Grid.Column="2" Command="{Binding DeleteCommand}" Style="{StaticResource IconButtonStyle}" Foreground="#F06A6A" Margin="0,5,0,5" ToolTip="Delete selected profile">
+              <Path Data="{StaticResource CodiconTrash}" Style="{StaticResource ButtonIconStyle}" />
+            </Button>
           </Grid>
         </Border>
-        <ListBox Grid.Row="1" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" DisplayMemberPath="Name" ItemContainerStyle="{StaticResource SidebarListItemStyle}" Margin="0,4" />
+        <ListBox Grid.Row="1"
+                 ItemsSource="{Binding Profiles}"
+                 SelectedItem="{Binding SelectedProfile}"
+                 DisplayMemberPath="Name"
+                 ItemContainerStyle="{StaticResource SidebarListItemStyle}"
+                 Margin="4,6" />
       </Grid>
     </DataTemplate>
 
     <DataTemplate x:Key="SettingsSidebarTemplate" DataType="{x:Type vm:SettingsViewModel}">
       <Grid>
-        <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-        <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1"><TextBlock Text="SETTINGS" Style="{StaticResource SidebarHeaderStyle}" VerticalAlignment="Center" Margin="14,0" /></Border>
-        <Border Grid.Row="1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="14"><StackPanel><TextBlock Text="APPEARANCE" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,7" /><TextBlock Text="{Binding Theme}" /></StackPanel></Border>
-        <Border Grid.Row="2" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="14"><StackPanel><TextBlock Text="STARTUP" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,7" /><TextBlock Text="Windows startup wiring is not implemented yet." Style="{StaticResource SecondaryTextStyle}" /></StackPanel></Border>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="46" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+          <TextBlock Text="SETTINGS" Style="{StaticResource SidebarHeaderStyle}" VerticalAlignment="Center" Margin="14,0" />
+        </Border>
+        <Border Grid.Row="1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="14">
+          <StackPanel>
+            <TextBlock Text="APPEARANCE" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,7" />
+            <TextBlock Text="{Binding Theme}" />
+          </StackPanel>
+        </Border>
+        <Border Grid.Row="2" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="14">
+          <StackPanel>
+            <TextBlock Text="WINDOWS STARTUP" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,7" />
+            <TextBlock Text="Managed through the current-user Windows startup entry." Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
       </Grid>
     </DataTemplate>
 
     <DataTemplate x:Key="DashboardEditorTemplate" DataType="{x:Type vm:DashboardViewModel}">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="26,24,26,28">
-          <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid Margin="28,24,28,30" MaxWidth="980" HorizontalAlignment="Left">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
           <Grid>
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-            <StackPanel><TextBlock Text="Dashboard" Style="{StaticResource PageTitleStyle}" /><TextBlock Text="Launch a saved profile and see exactly what is running." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,0,0" /></StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom"><Button Command="{Binding CancelCommand}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,9,0" Content="Cancel pending" /><Button Command="{Binding LaunchCommand}" Style="{StaticResource PrimaryButtonStyle}"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconPlay}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" /><TextBlock Text="Run profile" /></StackPanel></Button></StackPanel>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Dashboard" Style="{StaticResource PageTitleStyle}" />
+              <TextBlock Text="Pick a profile on the left, run it, then follow each launch step here."
+                         Style="{StaticResource SecondaryTextStyle}"
+                         Margin="0,5,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+              <Button Command="{Binding CancelCommand}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,10,0" Content="Cancel pending steps" />
+              <Button Command="{Binding LaunchCommand}" Style="{StaticResource PrimaryButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Data="{StaticResource CodiconPlay}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" />
+                  <TextBlock Text="Run profile" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
           </Grid>
-          <Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,18"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="Profile" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0,0,14,0" /><ComboBox Grid.Column="1" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" DisplayMemberPath="Name" MinWidth="280" HorizontalAlignment="Left" /><TextBlock Grid.Column="2" Text="{Binding StatusMessage}" Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" Margin="18,0,0,0" /></Grid></Border>
-          <TextBlock Grid.Row="2" Text="RUNS" Style="{StaticResource SidebarHeaderStyle}" Margin="2,0,0,9" />
-          <ListBox Grid.Row="3" ItemsSource="{Binding Sessions}" SelectedItem="{Binding SelectedSession}">
-            <ListBox.ItemTemplate><DataTemplate><Border Style="{StaticResource EditorSectionStyle}" Margin="0,0,0,10"><StackPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="{Binding ProfileName}" FontWeight="SemiBold" FontSize="14" /><TextBlock Grid.Column="1" Text="{Binding Status}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></Grid><ItemsControl ItemsSource="{Binding Steps}" Margin="0,10,0,0"><ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,2"><Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="90" /><ColumnDefinition Width="120" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions><TextBlock Text="{Binding ToolName}" /><TextBlock Grid.Column="1" Text="{Binding DelayBeforeSeconds, StringFormat={}{0}s delay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /><TextBlock Grid.Column="2" Text="{Binding Status}" FontWeight="SemiBold" /><TextBlock Grid.Column="3" Text="{Binding Error}" Foreground="#F06A6A" TextWrapping="Wrap" /></Grid></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border></DataTemplate></ListBox.ItemTemplate>
-          </ListBox>
+
+          <Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,18" Visibility="{Binding HasProfiles, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock Text="SELECTED PROFILE" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,8" />
+                <TextBlock Text="{Binding SelectedProfile.Name}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding SelectedProfile.Id, StringFormat=Internal ID: {0}}" Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0" />
+              </StackPanel>
+              <Border Grid.Column="1" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="8" Padding="12,7" VerticalAlignment="Center">
+                <TextBlock Text="{Binding SelectedProfile.Steps.Count, StringFormat={}{0} launch steps}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </Border>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,18" Visibility="{Binding HasNoProfiles, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel>
+              <TextBlock Text="Nothing to run yet" FontSize="18" FontWeight="SemiBold" />
+              <TextBlock Text="Create and test at least one Tool, then create a Profile that contains the tools you want to launch together."
+                         Style="{StaticResource SecondaryTextStyle}"
+                         TextWrapping="Wrap"
+                         Margin="0,7,0,0" />
+            </StackPanel>
+          </Border>
+
+          <Grid Grid.Row="2" Margin="2,0,0,10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="RUN HISTORY" Style="{StaticResource SidebarHeaderStyle}" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
+          </Grid>
+
+          <Grid Grid.Row="3">
+            <Border Visibility="{Binding HasNoSessions, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20">
+              <StackPanel>
+                <TextBlock Text="No runs yet" FontWeight="SemiBold" />
+                <TextBlock Text="Run a profile to see its progress and result here." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,0,0" />
+              </StackPanel>
+            </Border>
+
+            <ListBox ItemsSource="{Binding Sessions}"
+                     SelectedItem="{Binding SelectedSession}"
+                     Visibility="{Binding HasSessions, Converter={StaticResource BooleanToVisibilityConverter}}">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Border Style="{StaticResource EditorSectionStyle}" Margin="0,0,0,10">
+                    <StackPanel>
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding ProfileName}" FontWeight="SemiBold" FontSize="14" />
+                        <Border Grid.Column="1" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="7" Padding="9,4">
+                          <TextBlock Text="{Binding Status}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </Border>
+                      </Grid>
+                      <ItemsControl ItemsSource="{Binding Steps}" Margin="0,12,0,0">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Grid Margin="0,3">
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="2*" />
+                              </Grid.ColumnDefinitions>
+                              <TextBlock Text="{Binding ToolName}" />
+                              <TextBlock Grid.Column="1" Text="{Binding DelayBeforeSeconds, StringFormat={}{0}s delay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                              <TextBlock Grid.Column="2" Text="{Binding Status}" FontWeight="SemiBold" />
+                              <TextBlock Grid.Column="3" Text="{Binding Error}" Foreground="#F06A6A" TextWrapping="Wrap" />
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
         </Grid>
       </ScrollViewer>
     </DataTemplate>
 
     <DataTemplate x:Key="ToolsEditorTemplate" DataType="{x:Type vm:ToolLibraryViewModel}">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="26,24,26,28" MaxWidth="980" HorizontalAlignment="Left">
-          <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <Grid Margin="28,24,28,30" MaxWidth="980" HorizontalAlignment="Left">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
           <Grid>
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-            <StackPanel><TextBlock Text="Tool Library" Style="{StaticResource PageTitleStyle}" /><TextBlock Text="Create one reusable application or command. Test it here, then add it to profiles." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,0,0" /></StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom"><Button Command="{Binding LaunchCommand}" IsEnabled="{Binding CanRun}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,9,0"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconPlay}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" /><TextBlock Text="Test run" /></StackPanel></Button><Button Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" Style="{StaticResource PrimaryButtonStyle}"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconSave}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" /><TextBlock Text="Save tool" /></StackPanel></Button></StackPanel>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Tool Library" Style="{StaticResource PageTitleStyle}" />
+              <TextBlock Text="Add an application or command once, test it, then reuse it in any profile."
+                         Style="{StaticResource SecondaryTextStyle}"
+                         Margin="0,5,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+              <Button Command="{Binding LaunchCommand}" IsEnabled="{Binding CanRun}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,10,0">
+                <StackPanel Orientation="Horizontal">
+                  <Path Data="{StaticResource CodiconPlay}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" />
+                  <TextBlock Text="Test run" />
+                </StackPanel>
+              </Button>
+              <Button Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" Style="{StaticResource PrimaryButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Data="{StaticResource CodiconSave}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" />
+                  <TextBlock Text="Save tool" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
           </Grid>
-          <Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,14"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Name" Style="{StaticResource LabelStyle}" /><TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" /><StackPanel Orientation="Horizontal" Margin="2,7,0,0"><TextBlock Text="Internal ID: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" /><TextBlock Text="{Binding Id}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" /></StackPanel></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="Type" Style="{StaticResource LabelStyle}" /><ComboBox ItemsSource="{Binding ToolKinds}" SelectedItem="{Binding Kind}" /><TextBlock Text="Application opens a file, executable or URI. Command runs shell text." Style="{StaticResource SecondaryTextStyle}" FontSize="11" Margin="2,7,0,0" /></StackPanel></Grid></Border>
-          <Border Grid.Row="2" Style="{StaticResource EditorSectionStyle}" Visibility="{Binding IsApplication, Converter={StaticResource BooleanToVisibilityConverter}}"><StackPanel><TextBlock Text="APPLICATION" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,13" /><TextBlock Text="Application or file" Style="{StaticResource LabelStyle}" /><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox Text="{Binding Target, UpdateSourceTrigger=PropertyChanged}" /><Button Grid.Column="2" Command="{Binding BrowseTargetCommand}" Style="{StaticResource ToolbarButtonStyle}" Padding="14,6" Content="Browse…" /></Grid><TextBlock Text="Pick an .exe, shortcut or document, or enter a URI such as msteams:." Style="{StaticResource SecondaryTextStyle}" FontSize="11" Margin="2,7,0,13" /><TextBlock Text="Arguments (optional)" Style="{StaticResource LabelStyle}" /><TextBox Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" /></StackPanel></Border>
-          <Border Grid.Row="2" Style="{StaticResource EditorSectionStyle}" Visibility="{Binding IsCommand, Converter={StaticResource BooleanToVisibilityConverter}}"><StackPanel><TextBlock Text="COMMAND" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,13" /><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Shell" Style="{StaticResource LabelStyle}" /><ComboBox ItemsSource="{Binding ShellKinds}" SelectedItem="{Binding Shell}" /></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="Window" Style="{StaticResource LabelStyle}" /><ComboBox ItemsSource="{Binding WindowModes}" SelectedItem="{Binding WindowMode}" /></StackPanel></Grid><TextBlock Text="Command" Style="{StaticResource LabelStyle}" Margin="0,13,0,0" /><TextBox Text="{Binding CommandText, UpdateSourceTrigger=PropertyChanged}" Height="92" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" /><TextBlock Text="Environment variables (optional, KEY=VALUE per line)" Style="{StaticResource LabelStyle}" Margin="0,13,0,0" /><TextBox Text="{Binding EnvironmentText, UpdateSourceTrigger=PropertyChanged}" Height="92" AcceptsReturn="True" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" /></StackPanel></Border>
-          <Border Grid.Row="3" Style="{StaticResource EditorSectionStyle}" Margin="0,14,0,0"><StackPanel><TextBlock Text="WORKING DIRECTORY" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,13" /><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" /><Button Grid.Column="2" Command="{Binding BrowseWorkingDirectoryCommand}" Style="{StaticResource ToolbarButtonStyle}" Padding="14,6" Content="Browse folder…" /></Grid><TextBlock Text="Optional. Use this when the app or command expects to start from a specific project folder." Style="{StaticResource SecondaryTextStyle}" FontSize="11" Margin="2,7,0,0" /></StackPanel></Border>
-          <Grid Grid.Row="4" Margin="0,14,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Border Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12"><StackPanel><TextBlock Text="CONFIGURATION" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,6" /><TextBlock Text="{Binding ValidationMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></StackPanel></Border><Border Grid.Column="2" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12"><StackPanel><TextBlock Text="LAST ACTION" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,6" /><TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></StackPanel></Border></Grid>
+
+          <Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,14">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock Text="Name" Style="{StaticResource LabelStyle}" />
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal" Margin="2,7,0,0">
+                  <TextBlock Text="Internal ID: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" />
+                  <TextBlock Text="{Binding Id}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+                </StackPanel>
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="Type" Style="{StaticResource LabelStyle}" />
+                <ComboBox ItemsSource="{Binding ToolKinds}" SelectedItem="{Binding Kind}" />
+                <TextBlock Text="Application opens a Windows app/file. Command runs shell text."
+                           Style="{StaticResource SecondaryTextStyle}"
+                           FontSize="11"
+                           Margin="2,7,0,0" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="2" Style="{StaticResource EditorSectionStyle}" Visibility="{Binding IsApplication, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel>
+              <TextBlock Text="APPLICATION" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,13" />
+              <TextBlock Text="App, shortcut, file, or URI" Style="{StaticResource LabelStyle}" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="10" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding Target, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2" Command="{Binding BrowseTargetCommand}" Style="{StaticResource PrimaryButtonStyle}" Padding="15,6" Content="Choose app…" />
+              </Grid>
+              <TextBlock Text="Choose from apps Windows exposes in the Start menu first. The picker has a Browse file fallback if the app is missing. You can also paste a URI such as msteams:."
+                         Style="{StaticResource SecondaryTextStyle}"
+                         FontSize="11"
+                         TextWrapping="Wrap"
+                         Margin="2,7,0,13" />
+              <TextBlock Text="Arguments (optional)" Style="{StaticResource LabelStyle}" />
+              <TextBox Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="2" Style="{StaticResource EditorSectionStyle}" Visibility="{Binding IsCommand, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel>
+              <TextBlock Text="COMMAND" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,13" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="18" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="Shell" Style="{StaticResource LabelStyle}" />
+                  <ComboBox ItemsSource="{Binding ShellKinds}" SelectedItem="{Binding Shell}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Text="Window behavior" Style="{StaticResource LabelStyle}" />
+                  <ComboBox ItemsSource="{Binding WindowModes}" SelectedItem="{Binding WindowMode}" />
+                </StackPanel>
+              </Grid>
+              <TextBlock Text="Command" Style="{StaticResource LabelStyle}" Margin="0,13,0,0" />
+              <TextBox Text="{Binding CommandText, UpdateSourceTrigger=PropertyChanged}" Height="92" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" />
+              <TextBlock Text="Environment variables (optional, KEY=VALUE per line)" Style="{StaticResource LabelStyle}" Margin="0,13,0,0" />
+              <TextBox Text="{Binding EnvironmentText, UpdateSourceTrigger=PropertyChanged}" Height="92" AcceptsReturn="True" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" />
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="3" Style="{StaticResource EditorSectionStyle}" Margin="0,14,0,0">
+            <StackPanel>
+              <TextBlock Text="WORKING DIRECTORY" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,13" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="10" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2" Command="{Binding BrowseWorkingDirectoryCommand}" Style="{StaticResource ToolbarButtonStyle}" Padding="15,6" Content="Choose folder…" />
+              </Grid>
+              <TextBlock Text="Optional. Set this only when the app or command expects to start inside a specific folder."
+                         Style="{StaticResource SecondaryTextStyle}"
+                         FontSize="11"
+                         Margin="2,7,0,0" />
+            </StackPanel>
+          </Border>
+
+          <Grid Grid.Row="4" Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="18" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+              <StackPanel>
+                <TextBlock Text="CONFIGURATION" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,6" />
+                <TextBlock Text="{Binding ValidationMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+              <StackPanel>
+                <TextBlock Text="LAST ACTION" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,6" />
+                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+            </Border>
+          </Grid>
         </Grid>
       </ScrollViewer>
     </DataTemplate>
 
     <DataTemplate x:Key="ProfilesEditorTemplate" DataType="{x:Type vm:ProfilesViewModel}">
-      <Grid Margin="26,24,26,28" MaxWidth="980" HorizontalAlignment="Left">
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+      <Grid Margin="28,24,28,30" MaxWidth="980" HorizontalAlignment="Left">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
         <Grid>
-          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-          <StackPanel><TextBlock Text="Profiles" Style="{StaticResource PageTitleStyle}" /><TextBlock Text="Build a one-click launch sequence from tools you already tested." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,0,0" /></StackPanel>
-          <Button Grid.Column="1" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconSave}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" /><TextBlock Text="Save profile" /></StackPanel></Button>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel>
+            <TextBlock Text="Profiles" Style="{StaticResource PageTitleStyle}" />
+            <TextBlock Text="A profile is the one-click sequence of tools you want NGR to launch together."
+                       Style="{StaticResource SecondaryTextStyle}"
+                       Margin="0,5,0,0" />
+          </StackPanel>
+          <Button Grid.Column="1" Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom">
+            <StackPanel Orientation="Horizontal">
+              <Path Data="{StaticResource CodiconSave}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" />
+              <TextBlock Text="Save profile" />
+            </StackPanel>
+          </Button>
         </Grid>
 
         <Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,14">
           <StackPanel>
             <TextBlock Text="Profile name" Style="{StaticResource LabelStyle}" />
             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" MaxWidth="520" HorizontalAlignment="Left" />
-            <StackPanel Orientation="Horizontal" Margin="2,7,0,0"><TextBlock Text="Internal ID: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" /><TextBlock Text="{Binding Id}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" /></StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="2,7,0,0">
+              <TextBlock Text="Internal ID: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" />
+              <TextBlock Text="{Binding Id}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+            </StackPanel>
           </StackPanel>
         </Border>
 
         <Border Grid.Row="2" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
-          <StackPanel><TextBlock Text="PROFILE CHECK" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,6" /><TextBlock Text="{Binding ValidationMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></StackPanel>
+          <StackPanel>
+            <TextBlock Text="PROFILE CHECK" Style="{StaticResource SidebarHeaderStyle}" Margin="0,0,0,6" />
+            <TextBlock Text="{Binding ValidationMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+          </StackPanel>
         </Border>
 
         <Border Grid.Row="3" Style="{StaticResource EditorSectionStyle}">
           <Grid>
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-            <Grid Margin="0,0,0,11">
-              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-              <StackPanel><TextBlock Text="LAUNCH STEPS" Style="{StaticResource SidebarHeaderStyle}" /><TextBlock Text="Steps run from top to bottom. Delay is applied before each tool starts." Style="{StaticResource SecondaryTextStyle}" FontSize="11" Margin="0,5,0,0" /></StackPanel>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Margin="0,0,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock Text="LAUNCH STEPS" Style="{StaticResource SidebarHeaderStyle}" />
+                <TextBlock Text="Top to bottom. Delay happens before each tool starts."
+                           Style="{StaticResource SecondaryTextStyle}"
+                           FontSize="11"
+                           Margin="0,5,0,0" />
+              </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Command="{Binding AddStepCommand}" IsEnabled="{Binding HasAvailableTools}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,7,0"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,7,0" /><TextBlock Text="Add tool" /></StackPanel></Button>
-                <Button Command="{Binding MoveStepUpCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,0,7,0" ToolTip="Move selected step up"><Path Data="{StaticResource CodiconChevronUp}" Style="{StaticResource ButtonIconStyle}" /></Button>
-                <Button Command="{Binding MoveStepDownCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,0,7,0" ToolTip="Move selected step down"><Path Data="{StaticResource CodiconChevronDown}" Style="{StaticResource ButtonIconStyle}" /></Button>
-                <Button Command="{Binding RemoveStepCommand}" Style="{StaticResource ToolbarButtonStyle}" Foreground="#F06A6A"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconTrash}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,7,0" /><TextBlock Text="Remove" /></StackPanel></Button>
+                <Button Command="{Binding AddStepCommand}" IsEnabled="{Binding HasAvailableTools}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,8,0">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource CodiconAdd}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,7,0" />
+                    <TextBlock Text="Add tool" />
+                  </StackPanel>
+                </Button>
+                <Button Command="{Binding MoveStepUpCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,0,8,0" ToolTip="Move selected step up">
+                  <Path Data="{StaticResource CodiconChevronUp}" Style="{StaticResource ButtonIconStyle}" />
+                </Button>
+                <Button Command="{Binding MoveStepDownCommand}" Style="{StaticResource IconButtonStyle}" Margin="0,0,8,0" ToolTip="Move selected step down">
+                  <Path Data="{StaticResource CodiconChevronDown}" Style="{StaticResource ButtonIconStyle}" />
+                </Button>
+                <Button Command="{Binding RemoveStepCommand}" Style="{StaticResource ToolbarButtonStyle}" Foreground="#F06A6A">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource CodiconTrash}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,7,0" />
+                    <TextBlock Text="Remove" />
+                  </StackPanel>
+                </Button>
               </StackPanel>
             </Grid>
 
             <Border Grid.Row="1" Visibility="{Binding HasNoAvailableTools, Converter={StaticResource BooleanToVisibilityConverter}}" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,11">
-              <StackPanel><TextBlock Text="No tools yet" FontWeight="SemiBold" /><TextBlock Text="Open Tool Library, create and test at least one application or command, then come back here." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,0,0" /></StackPanel>
+              <StackPanel>
+                <TextBlock Text="No tools available" FontWeight="SemiBold" />
+                <TextBlock Text="Open Tool Library, choose an installed app or create a command, test it, save it, then return here."
+                           Style="{StaticResource SecondaryTextStyle}"
+                           Margin="0,5,0,0"
+                           TextWrapping="Wrap" />
+              </StackPanel>
             </Border>
 
             <Border Grid.Row="2" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="10" ClipToBounds="True" Visibility="{Binding HasAvailableTools, Converter={StaticResource BooleanToVisibilityConverter}}">
               <DataGrid ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column">
                 <DataGrid.Columns>
-                  <DataGridTemplateColumn Header="Tool" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><ComboBox ItemsSource="{Binding DataContext.AvailableTools, RelativeSource={RelativeSource AncestorType=DataGrid}}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding ToolId, UpdateSourceTrigger=PropertyChanged}" Margin="0" MinHeight="30" /></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Tool" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <ComboBox ItemsSource="{Binding DataContext.AvailableTools, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                  DisplayMemberPath="Name"
+                                  SelectedValuePath="Id"
+                                  SelectedValue="{Binding ToolId, UpdateSourceTrigger=PropertyChanged}"
+                                  Margin="0"
+                                  MinHeight="30" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
                   <DataGridTextColumn Header="Delay before launch (0–300 seconds)" Width="245" Binding="{Binding DelayBeforeSeconds, UpdateSourceTrigger=PropertyChanged}" />
                 </DataGrid.Columns>
               </DataGrid>
@@ -173,23 +565,217 @@
     </DataTemplate>
 
     <DataTemplate x:Key="SettingsEditorTemplate" DataType="{x:Type vm:SettingsViewModel}">
-      <ScrollViewer VerticalScrollBarVisibility="Auto"><Grid Margin="26,24,26,28"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Settings" Style="{StaticResource PageTitleStyle}" /><TextBlock Text="Appearance and Windows integration preferences." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,0,0" /></StackPanel><Button Grid.Column="1" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconSave}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" /><TextBlock Text="Save settings" /></StackPanel></Button></Grid><Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,14" MaxWidth="760" HorizontalAlignment="Left"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="190" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Appearance" Style="{StaticResource SectionTitleStyle}" /><TextBlock Text="Choose how NGR follows Windows colors." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,22,0" /></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="Theme" Style="{StaticResource LabelStyle}" /><ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" Width="240" HorizontalAlignment="Left" /></StackPanel></Grid></Border><Border Grid.Row="2" Style="{StaticResource EditorSectionStyle}" MaxWidth="760" HorizontalAlignment="Left"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="190" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Startup" Style="{StaticResource SectionTitleStyle}" /><TextBlock Text="Windows startup integration." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,22,0" /></StackPanel><StackPanel Grid.Column="1"><CheckBox Content="Start NGR Launcher with Windows" IsChecked="{Binding StartWithWindows}" /><TextBlock Text="The preference is saved, but Windows startup registration is not wired yet." Style="{StaticResource SecondaryTextStyle}" Margin="0,9,0,0" /></StackPanel></Grid></Border><TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Style="{StaticResource SecondaryTextStyle}" Margin="2,13,0,0" /></Grid></ScrollViewer>
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="28,24,28,30" MaxWidth="820" HorizontalAlignment="Left">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Settings" Style="{StaticResource PageTitleStyle}" />
+              <TextBlock Text="Appearance and Windows integration." Style="{StaticResource SecondaryTextStyle}" Margin="0,5,0,0" />
+            </StackPanel>
+            <Button Grid.Column="1" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom">
+              <StackPanel Orientation="Horizontal">
+                <Path Data="{StaticResource CodiconSave}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0" />
+                <TextBlock Text="Save settings" />
+              </StackPanel>
+            </Button>
+          </Grid>
+
+          <Border Grid.Row="1" Style="{StaticResource EditorSectionStyle}" Margin="0,22,0,14">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="210" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock Text="Appearance" Style="{StaticResource SectionTitleStyle}" />
+                <TextBlock Text="Choose the light/dark behavior for the entire app and native title bar."
+                           Style="{StaticResource SecondaryTextStyle}"
+                           TextWrapping="Wrap"
+                           Margin="0,5,24,0" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Theme" Style="{StaticResource LabelStyle}" />
+                <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" Width="240" HorizontalAlignment="Left" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="2" Style="{StaticResource EditorSectionStyle}">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="210" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock Text="Start with Windows" Style="{StaticResource SectionTitleStyle}" />
+                <TextBlock Text="Uses the current-user Windows Run entry."
+                           Style="{StaticResource SecondaryTextStyle}"
+                           TextWrapping="Wrap"
+                           Margin="0,5,24,0" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <CheckBox Content="Start NGR Launcher when I sign in" IsChecked="{Binding StartWithWindows}" />
+                <TextBlock Text="When enabled, NGR starts hidden in the tray and never auto-runs a profile."
+                           Style="{StaticResource SecondaryTextStyle}"
+                           Margin="0,9,0,0"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Style="{StaticResource SecondaryTextStyle}" Margin="2,13,0,0" TextWrapping="Wrap" />
+        </Grid>
+      </ScrollViewer>
     </DataTemplate>
   </Window.Resources>
 
   <Grid>
-    <Grid.RowDefinitions><RowDefinition Height="34" /><RowDefinition Height="*" /><RowDefinition Height="24" /></Grid.RowDefinitions>
-    <Border Grid.Row="0" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
-      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="52" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource SystemAccentColorPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="NGR Launcher"><Path Data="{StaticResource CodiconPlay}" Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextOnAccentFillColorPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><Menu Grid.Column="1" VerticalAlignment="Stretch"><MenuItem Header="View"><MenuItem Header="Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" /><MenuItem Header="Tool Library" Command="{Binding NavigateCommand}" CommandParameter="Tools" /><MenuItem Header="Profiles" Command="{Binding NavigateCommand}" CommandParameter="Profiles" /><Separator /><MenuItem Header="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" /></MenuItem><MenuItem Header="Run"><MenuItem Header="Run selected profile" Command="{Binding Dashboard.LaunchCommand}" /><MenuItem Header="Cancel pending steps" Command="{Binding Dashboard.CancelCommand}" /></MenuItem></Menu><TextBlock Grid.Column="2" Text="NGR Launcher" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Center" /><Border Grid.Column="3" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="7" Padding="8,3" Margin="0,5,10,5"><TextBlock Text="{Binding CurrentTitle}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" VerticalAlignment="Center" /></Border></Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="40" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="26" />
+    </Grid.RowDefinitions>
+
+    <Border Grid.Row="0"
+            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+            BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+      <Grid Margin="8,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Border Width="27" Height="27" CornerRadius="8" Background="{DynamicResource SystemAccentColorPrimaryBrush}" VerticalAlignment="Center" Margin="2,0,10,0">
+          <Path Data="{StaticResource CodiconPlay}" Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextOnAccentFillColorPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+
+        <Menu Grid.Column="1" VerticalAlignment="Stretch">
+          <MenuItem Header="View">
+            <MenuItem Header="Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" />
+            <MenuItem Header="Tool Library" Command="{Binding NavigateCommand}" CommandParameter="Tools" />
+            <MenuItem Header="Profiles" Command="{Binding NavigateCommand}" CommandParameter="Profiles" />
+            <Separator />
+            <MenuItem Header="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" />
+          </MenuItem>
+          <MenuItem Header="Run">
+            <MenuItem Header="Run selected profile" Command="{Binding Dashboard.LaunchCommand}" />
+            <MenuItem Header="Cancel pending steps" Command="{Binding Dashboard.CancelCommand}" />
+          </MenuItem>
+        </Menu>
+
+        <TextBlock Grid.Column="2" Text="NGR Launcher" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11.5" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        <TextBlock Grid.Column="3" Text="{Binding CurrentTitle}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,4,0" />
+      </Grid>
     </Border>
 
     <Grid Grid.Row="1">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="52" /><ColumnDefinition Width="252" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-      <Border Grid.Column="0" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0"><DockPanel LastChildFill="True"><StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,5"><Button Command="{Binding NavigateCommand}" CommandParameter="Settings" ToolTip="Settings"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}"><Style.Triggers><DataTrigger Binding="{Binding CurrentTitle}" Value="Settings"><Setter Property="Tag" Value="Active" /></DataTrigger></Style.Triggers></Style></Button.Style><Path Data="{StaticResource CodiconSettings}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" /></Button></StackPanel><StackPanel Margin="0,5,0,0"><Button Command="{Binding NavigateCommand}" CommandParameter="Dashboard" ToolTip="Dashboard"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}"><Style.Triggers><DataTrigger Binding="{Binding CurrentTitle}" Value="Dashboard"><Setter Property="Tag" Value="Active" /></DataTrigger></Style.Triggers></Style></Button.Style><Path Data="{StaticResource CodiconHome}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" /></Button><Button Command="{Binding NavigateCommand}" CommandParameter="Tools" ToolTip="Tool Library"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}"><Style.Triggers><DataTrigger Binding="{Binding CurrentTitle}" Value="Tool Library"><Setter Property="Tag" Value="Active" /></DataTrigger></Style.Triggers></Style></Button.Style><Path Data="{StaticResource CodiconTools}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" /></Button><Button Command="{Binding NavigateCommand}" CommandParameter="Profiles" ToolTip="Profiles"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}"><Style.Triggers><DataTrigger Binding="{Binding CurrentTitle}" Value="Profiles"><Setter Property="Tag" Value="Active" /></DataTrigger></Style.Triggers></Style></Button.Style><Path Data="{StaticResource CodiconLibrary}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" /></Button></StackPanel></DockPanel></Border>
-      <Border Grid.Column="1" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0"><ContentControl Content="{Binding CurrentPage}"><ContentControl.Resources><DataTemplate DataType="{x:Type vm:DashboardViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource DashboardSidebarTemplate}" /></DataTemplate><DataTemplate DataType="{x:Type vm:ToolLibraryViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ToolsSidebarTemplate}" /></DataTemplate><DataTemplate DataType="{x:Type vm:ProfilesViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ProfilesSidebarTemplate}" /></DataTemplate><DataTemplate DataType="{x:Type vm:SettingsViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource SettingsSidebarTemplate}" /></DataTemplate></ContentControl.Resources></ContentControl></Border>
-      <Grid Grid.Column="2" Background="{DynamicResource ApplicationBackgroundBrush}"><Grid.RowDefinitions><RowDefinition Height="38" /><RowDefinition Height="*" /></Grid.RowDefinitions><Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource SystemAccentColorPrimaryBrush}" BorderThickness="0,2,0,0" CornerRadius="8,8,0,0" Padding="14,0" Margin="5,4,0,0" MinWidth="150"><TextBlock Text="{Binding CurrentTitle}" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" /></Border><TextBlock Grid.Column="1" Text="Local workspace" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" VerticalAlignment="Center" Margin="14,0" /><Button Grid.Column="2" Command="{Binding Dashboard.LaunchCommand}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,4,8,4" Padding="10,3" ToolTip="Run selected profile"><StackPanel Orientation="Horizontal"><Path Data="{StaticResource CodiconPlay}" Style="{StaticResource ButtonIconStyle}" Margin="0,0,7,0" /><TextBlock Text="Run" /></StackPanel></Button></Grid></Border><ContentControl Grid.Row="1" Content="{Binding CurrentPage}"><ContentControl.Resources><DataTemplate DataType="{x:Type vm:DashboardViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource DashboardEditorTemplate}" /></DataTemplate><DataTemplate DataType="{x:Type vm:ToolLibraryViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ToolsEditorTemplate}" /></DataTemplate><DataTemplate DataType="{x:Type vm:ProfilesViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ProfilesEditorTemplate}" /></DataTemplate><DataTemplate DataType="{x:Type vm:SettingsViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource SettingsEditorTemplate}" /></DataTemplate></ContentControl.Resources></ContentControl></Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="54" />
+        <ColumnDefinition Width="260" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <Border Grid.Column="0" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+        <DockPanel LastChildFill="True">
+          <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,6">
+            <Button Command="{Binding NavigateCommand}" CommandParameter="Settings" ToolTip="Settings">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding CurrentTitle}" Value="Settings"><Setter Property="Tag" Value="Active" /></DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+              <Path Data="{StaticResource CodiconSettings}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" />
+            </Button>
+          </StackPanel>
+          <StackPanel Margin="0,6,0,0">
+            <Button Command="{Binding NavigateCommand}" CommandParameter="Dashboard" ToolTip="Dashboard">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding CurrentTitle}" Value="Dashboard"><Setter Property="Tag" Value="Active" /></DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+              <Path Data="{StaticResource CodiconHome}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" />
+            </Button>
+            <Button Command="{Binding NavigateCommand}" CommandParameter="Tools" ToolTip="Tool Library">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding CurrentTitle}" Value="Tool Library"><Setter Property="Tag" Value="Active" /></DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+              <Path Data="{StaticResource CodiconTools}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" />
+            </Button>
+            <Button Command="{Binding NavigateCommand}" CommandParameter="Profiles" ToolTip="Profiles">
+              <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource ActivityButtonStyle}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding CurrentTitle}" Value="Profiles"><Setter Property="Tag" Value="Active" /></DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Button.Style>
+              <Path Data="{StaticResource CodiconLibrary}" Style="{StaticResource ButtonIconStyle}" Width="22" Height="22" />
+            </Button>
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <Border Grid.Column="1" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+        <ContentControl Content="{Binding CurrentPage}">
+          <ContentControl.Resources>
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource DashboardSidebarTemplate}" /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ToolLibraryViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ToolsSidebarTemplate}" /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ProfilesViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ProfilesSidebarTemplate}" /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource SettingsSidebarTemplate}" /></DataTemplate>
+          </ContentControl.Resources>
+        </ContentControl>
+      </Border>
+
+      <Grid Grid.Column="2" Background="{DynamicResource ApplicationBackgroundBrush}">
+        <ContentControl Content="{Binding CurrentPage}">
+          <ContentControl.Resources>
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource DashboardEditorTemplate}" /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ToolLibraryViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ToolsEditorTemplate}" /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ProfilesViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource ProfilesEditorTemplate}" /></DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><ContentControl Content="{Binding}" ContentTemplate="{StaticResource SettingsEditorTemplate}" /></DataTemplate>
+          </ContentControl.Resources>
+        </ContentControl>
+      </Grid>
     </Grid>
 
-    <Border Grid.Row="2" Background="{DynamicResource SystemAccentColorPrimaryBrush}"><Grid Margin="9,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><Ellipse Width="6" Height="6" Fill="{DynamicResource TextOnAccentFillColorPrimaryBrush}" VerticalAlignment="Center" /><TextBlock Grid.Column="1" Text="NGR" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,12,0" /><TextBlock Grid.Column="2" Text="Local workspace" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Opacity="0.88" FontSize="10.5" VerticalAlignment="Center" /><TextBlock Grid.Column="3" Text="{Binding CurrentTitle}" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Opacity="0.88" FontSize="10.5" VerticalAlignment="Center" Margin="0,0,14,0" /><TextBlock Grid.Column="4" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Opacity="0.88" FontSize="10.5" VerticalAlignment="Center"><Run Text="Theme: " /><Run Text="{Binding Settings.Theme}" /></TextBlock></Grid></Border>
+    <Border Grid.Row="2" Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+      <Grid Margin="10,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Ellipse Width="6" Height="6" Fill="{DynamicResource SystemAccentColorPrimaryBrush}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="Ready" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,14,0" />
+        <TextBlock Grid.Column="3" Text="{Binding CurrentTitle}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="10.5" VerticalAlignment="Center" Margin="0,0,14,0" />
+        <TextBlock Grid.Column="4" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="10.5" VerticalAlignment="Center">
+          <Run Text="Theme: " /><Run Text="{Binding Settings.Theme}" />
+        </TextBlock>
+      </Grid>
+    </Border>
   </Grid>
 </Window>
