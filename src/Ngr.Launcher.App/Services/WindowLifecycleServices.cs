@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Ngr.Launcher.Core.Execution;
 using Ngr.Launcher.Core.Models;
 using Wpf.Ui.Tray;
@@ -156,13 +157,15 @@ public sealed class LauncherTrayIconService : NotifyIconService
         Action<ProfileDefinition> launchProfile,
         Action exit,
         IEnumerable<ProfileDefinition> profiles,
-        string tooltipText)
+        string tooltipText,
+        ImageSource icon)
     {
         _openWindow = openWindow ?? throw new ArgumentNullException(nameof(openWindow));
         _launchProfile = launchProfile ?? throw new ArgumentNullException(nameof(launchProfile));
         _exit = exit ?? throw new ArgumentNullException(nameof(exit));
         ArgumentNullException.ThrowIfNull(profiles);
         TooltipText = tooltipText ?? throw new ArgumentNullException(nameof(tooltipText));
+        Icon = icon ?? throw new ArgumentNullException(nameof(icon));
         UpdateProfiles(profiles);
     }
 
@@ -209,7 +212,7 @@ public sealed class LauncherTrayIconService : NotifyIconService
 
         menu.Items.Add(CreateSeparator());
         var exitItem = CreateMenuItem("Exit NGR Launcher");
-        exitItem.Foreground = System.Windows.Media.Brushes.IndianRed;
+        exitItem.Foreground = Brushes.IndianRed;
         exitItem.Click += (_, _) => _exit();
         menu.Items.Add(exitItem);
         ContextMenu = menu;
@@ -228,7 +231,7 @@ public sealed class LauncherTrayIconService : NotifyIconService
             MinWidth = 220,
             Padding = new Thickness(5),
             BorderThickness = new Thickness(1),
-            FontFamily = new System.Windows.Media.FontFamily("Segoe UI"),
+            FontFamily = new FontFamily("Segoe UI"),
             FontSize = 12.5
         };
         menu.SetResourceReference(Control.BackgroundProperty, "CardBackgroundFillColorDefaultBrush");

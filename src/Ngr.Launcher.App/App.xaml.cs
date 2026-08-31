@@ -51,8 +51,13 @@ public partial class App : System.Windows.Application
             var profiles = new ProfilesViewModel(workspace, confirmation, dispatcher);
             var settings = new SettingsViewModel(workspace, dispatcher, themeService, startupRegistration);
             var mainViewModel = new MainViewModel(dashboard, tools, profiles, settings);
+            var launcherIcon = LauncherIconProvider.GetIcon();
 
-            var window = new MainWindow { DataContext = mainViewModel };
+            var window = new MainWindow
+            {
+                DataContext = mainViewModel,
+                Icon = launcherIcon
+            };
             MainWindow = window;
             themeService.Attach(window);
             if (!startupLaunch)
@@ -67,7 +72,8 @@ public partial class App : System.Windows.Application
                 profile => _ = dashboard.LaunchAsync(profile),
                 () => exitController?.RequestExit(),
                 workspace.Configuration.Profiles,
-                "NGR Launcher");
+                "NGR Launcher",
+                launcherIcon);
             exitController = new ApplicationExitController(
                 confirmation,
                 cancellations,

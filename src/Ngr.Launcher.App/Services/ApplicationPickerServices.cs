@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Win32;
 
 namespace Ngr.Launcher.App.Services;
@@ -258,7 +259,6 @@ internal sealed class InstalledApplicationPickerWindow : Window
         _searchBox.TextChanged += (_, _) => RefreshList();
         _applicationList = new ListBox
         {
-            DisplayMemberPath = nameof(InstalledApplicationEntry.DisplayText),
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
         _applicationList.SelectionChanged += (_, _) => UpdateSelectedTarget();
@@ -274,8 +274,11 @@ internal sealed class InstalledApplicationPickerWindow : Window
             RefreshList();
             if (!string.IsNullOrWhiteSpace(currentTarget))
             {
-                _applicationList.SelectedItem = _allApplications.FirstOrDefault(entry =>
-                    string.Equals(entry.Target, currentTarget, StringComparison.OrdinalIgnoreCase));
+                _applicationList.SelectedItem = _applicationList.Items
+                    .OfType<ListBoxItem>()
+                    .FirstOrDefault(item =>
+                        item.Tag is InstalledApplicationEntry entry
+                        && string.Equals(entry.Target, currentTarget, StringComparison.OrdinalIgnoreCase));
                 if (_applicationList.SelectedItem is not null)
                 {
                     _applicationList.ScrollIntoView(_applicationList.SelectedItem);
@@ -418,7 +421,7 @@ internal sealed class InstalledApplicationPickerWindow : Window
                 || entry.Target.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || entry.Source.Contains(query, StringComparison.OrdinalIgnoreCase))
             .ToArray();
-        _applicationList.ItemsSource = filtered;
+        _applicationList.ItemsSource = filtered.Select(CreateApplicationListItem).ToArray();
         _summaryText.Text = filtered.Length == 1 ? "1 app" : $"{filtered.Length} apps";
         if (filtered.Length == 0)
         {
@@ -426,16 +429,71 @@ internal sealed class InstalledApplicationPickerWindow : Window
         }
     }
 
+    private static ListBoxItem CreateApplicationListItem(InstalledApplicationEntry entry)
+    {
+        var row = new Grid { Margin = new Thickness(2) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var icon = new Image
+        {
+            Width = 28,
+            Height = 28,
+            Stretch = Stretch.Uniform,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Source = WindowsShellIconProvider.GetSmallIcon(entry.Target) ?? LauncherIconProvider.GetIcon()
+        };
+        row.Children.Add(icon);
+
+        var text = new StackPanel
+        {
+            Margin = new Thickness(8, 2, 8, 2),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        var name = new TextBlock
+        {
+            Text = entry.Name,
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        text.Children.Add(name);
+        var source = CreateSecondaryText();
+        source.Text = entry.Source;
+        source.FontSize = 11;
+        source.Margin = new Thickness(0, 2, 0, 0);
+        source.TextTrimming = TextTrimming.CharacterEllipsis;
+        text.Children.Add(source);
+        Grid.SetColumn(text, 1);
+        row.Children.Add(text);
+
+        return new ListBoxItem
+        {
+            Tag = entry,
+            Content = row,
+            Padding = new Thickness(6, 5, 6, 5),
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            ToolTip = entry.Target
+        };
+    }
+
+    private InstalledApplicationEntry? GetSelectedEntry() =>
+        _applicationList.SelectedItem is ListBoxItem item
+        && item.Tag is InstalledApplicationEntry entry
+            ? entry
+            : null;
+
     private void UpdateSelectedTarget()
     {
-        _selectedTargetText.Text = _applicationList.SelectedItem is InstalledApplicationEntry entry
+        _selectedTargetText.Text = GetSelectedEntry() is { } entry
             ? entry.Target
             : "Select an app from the list.";
     }
 
     private void UseSelection()
     {
-        if (_applicationList.SelectedItem is not InstalledApplicationEntry entry)
+        if (GetSelectedEntry() is not { } entry)
         {
             return;
         }
