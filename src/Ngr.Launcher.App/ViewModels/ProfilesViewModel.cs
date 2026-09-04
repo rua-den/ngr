@@ -35,12 +35,15 @@ public sealed class ProfilesViewModel : ObservableObject
     private readonly IUiDispatcher _dispatcher;
     private ProfileDefinition? _selectedProfile;
     private ProfileStepEditorViewModel? _selectedStep;
+    private ToolDefinition? _toolToAdd;
     private string? _originalId;
     private string _id = string.Empty;
     private string _name = string.Empty;
     private string _statusMessage = string.Empty;
     private string _validationMessage = string.Empty;
     private bool _canSave;
+    private bool _canDelete;
+    private bool _isDirty;
     private bool _autoId = true;
     private bool _loading;
 
@@ -54,40 +57,71 @@ public sealed class ProfilesViewModel : ObservableObject
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
         NewCommand = new RelayCommand(New);
-        AddStepCommand = new RelayCommand(AddStep);
-        RemoveStepCommand = new RelayCommand(RemoveSelectedStep);
-        MoveStepUpCommand = new RelayCommand(MoveSelectedStepUp);
-        MoveStepDownCommand = new RelayCommand(MoveSelectedStepDown);
+        AddStepCommand = new RelayCommand(AddStep, () => ToolToAdd is not null);
+        RemoveStepCommand = new RelayCommand(RemoveSelectedStep, () => SelectedStep is not null);
+        MoveStepUpCommand = new RelayCommand(MoveSelectedStepUp, CanMoveSelectedStepUp);
+        MoveStepDownCommand = new RelayCommand(MoveSelectedStepDown, CanMoveSelectedStepDown);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         DeleteCommand = new AsyncRelayCommand(DeleteAsync);
 
         _workspace.Changed += (_, _) => _dispatcher.Invoke(() => RefreshFromWorkspace());
         RefreshFromWorkspace();
-        New();
+        StartNewEditor();
     }
 
     public ObservableCollection<ProfileDefinition> Profiles { get; } = [];
-
     public ObservableCollection<ToolDefinition> AvailableTools { get; } = [];
-
     public ObservableCollection<ProfileStepEditorViewModel> Steps { get; } = [];
+
+    public bool HasProfiles => Profiles.Count > 0;
+    public bool HasNoProfiles => !HasProfiles;
+    public bool HasAvailableTools => AvailableTools.Count > 0;
+    public bool HasNoAvailableTools => !HasAvailableTools;
+    public bool HasSteps => Steps.Count > 0;
+    public bool HasNoSteps => !HasSteps;
 
     public ProfileDefinition? SelectedProfile
     {
         get => _selectedProfile;
         set
         {
-            if (SetProperty(ref _selectedProfile, value) && value is not null)
+            if (ReferenceEquals(_selectedProfile, value))
             {
-                LoadEditor(value, value.Id, autoId: false);
+                return;
             }
+
+            if (!_loading && IsDirty && !ConfirmDiscardChanges())
+            {
+                OnPropertyChanged(nameof(SelectedProfile));
+                return;
+            }
+
+            SelectProfileWithoutPrompt(value, loadEditor: value is not null);
         }
     }
 
     public ProfileStepEditorViewModel? SelectedStep
     {
         get => _selectedStep;
-        set => SetProperty(ref _selectedStep, value);
+        set
+        {
+            if (SetProperty(ref _selectedStep, value))
+            {
+                NotifyStepCommands();
+            }
+        }
+    }
+
+    public ToolDefinition? ToolToAdd
+    {
+        get => _toolToAdd;
+        set
+        {
+            if (SetProperty(ref _toolToAdd, value))
+            {
+                AddStepCommand.NotifyCanExecuteChanged();
+            }
+        }
     }
 
     public string Id
@@ -102,6 +136,7 @@ public sealed class ProfilesViewModel : ObservableObject
 
             if (SetProperty(ref _id, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -117,6 +152,7 @@ public sealed class ProfilesViewModel : ObservableObject
                 return;
             }
 
+            MarkDirty();
             if (!_loading && _autoId)
             {
                 SetGeneratedId(string.IsNullOrWhiteSpace(value)
@@ -146,64 +182,58 @@ public sealed class ProfilesViewModel : ObservableObject
         private set => SetProperty(ref _canSave, value);
     }
 
-    public bool HasAvailableTools => AvailableTools.Count > 0;
+    public bool CanDelete
+    {
+        get => _canDelete;
+        private set => SetProperty(ref _canDelete, value);
+    }
 
-    public bool HasNoAvailableTools => AvailableTools.Count == 0;
+    public bool IsDirty
+    {
+        get => _isDirty;
+        private set => SetProperty(ref _isDirty, value);
+    }
 
     public IRelayCommand NewCommand { get; }
-
     public IRelayCommand AddStepCommand { get; }
-
     public IRelayCommand RemoveStepCommand { get; }
-
     public IRelayCommand MoveStepUpCommand { get; }
-
     public IRelayCommand MoveStepDownCommand { get; }
-
     public IAsyncRelayCommand SaveCommand { get; }
-
     public IAsyncRelayCommand DeleteCommand { get; }
 
     public void New()
     {
-        SelectedProfile = null;
-        _originalId = null;
-        _autoId = true;
-        _loading = true;
-        Id = string.Empty;
-        Name = string.Empty;
-        ClearSteps();
-        SelectedStep = null;
-        _loading = false;
-        _autoId = true;
-        RefreshValidation();
-        StatusMessage = HasAvailableTools
-            ? "New profile — add tools in the order you want them launched."
-            : "Create at least one tool before building a profile.";
+        if (IsDirty && !ConfirmDiscardChanges())
+        {
+            return;
+        }
+
+        StartNewEditor();
     }
 
     public void AddStep()
     {
-        var firstTool = AvailableTools.FirstOrDefault();
-        if (firstTool is null)
+        if (ToolToAdd is null)
         {
-            StatusMessage = "No tools are available. Create a tool in Tool Library first.";
+            StatusMessage = "Choose a tool to add first.";
             return;
         }
 
-        var step = new ProfileStepEditorViewModel { ToolId = firstTool.Id };
+        var step = new ProfileStepEditorViewModel { ToolId = ToolToAdd.Id };
         AttachStep(step);
         Steps.Add(step);
         SelectedStep = step;
+        MarkDirty();
+        NotifyStepsChanged();
         RefreshValidation();
-        StatusMessage = $"Added '{firstTool.Name}'. Choose a different tool or set a delay if needed.";
+        StatusMessage = $"Added '{ToolToAdd.Name}'. Set a delay or reorder it if needed.";
     }
 
     public void RemoveSelectedStep()
     {
         if (SelectedStep is null)
         {
-            StatusMessage = "Select a profile step first.";
             return;
         }
 
@@ -213,44 +243,38 @@ public sealed class ProfilesViewModel : ObservableObject
         SelectedStep = Steps.Count == 0
             ? null
             : Steps[Math.Clamp(index, 0, Steps.Count - 1)];
+        MarkDirty();
+        NotifyStepsChanged();
         RefreshValidation();
         StatusMessage = "Step removed.";
     }
 
     public void MoveSelectedStepUp()
     {
-        if (SelectedStep is null)
+        if (!CanMoveSelectedStepUp() || SelectedStep is null)
         {
-            StatusMessage = "Select a profile step first.";
             return;
         }
 
         var index = Steps.IndexOf(SelectedStep);
-        if (index <= 0)
-        {
-            return;
-        }
-
         Steps.Move(index, index - 1);
+        MarkDirty();
+        NotifyStepCommands();
         RefreshValidation();
         StatusMessage = "Step moved up.";
     }
 
     public void MoveSelectedStepDown()
     {
-        if (SelectedStep is null)
+        if (!CanMoveSelectedStepDown() || SelectedStep is null)
         {
-            StatusMessage = "Select a profile step first.";
             return;
         }
 
         var index = Steps.IndexOf(SelectedStep);
-        if (index < 0 || index >= Steps.Count - 1)
-        {
-            return;
-        }
-
         Steps.Move(index, index + 1);
+        MarkDirty();
+        NotifyStepCommands();
         RefreshValidation();
         StatusMessage = "Step moved down.";
     }
@@ -260,7 +284,9 @@ public sealed class ProfilesViewModel : ObservableObject
         RefreshValidation();
         if (!CanSave)
         {
-            StatusMessage = "Fix the profile configuration issue before saving.";
+            StatusMessage = IsDirty
+                ? "Fix the profile configuration issue before saving."
+                : "No unsaved changes.";
             return;
         }
 
@@ -270,7 +296,9 @@ public sealed class ProfilesViewModel : ObservableObject
             await _workspace.SaveProfileAsync(_originalId, profile);
             _originalId = profile.Id;
             _autoId = false;
+            IsDirty = false;
             RefreshFromWorkspace(profile.Id);
+            RefreshValidation();
             StatusMessage = $"Saved '{profile.Name}'. It is ready to run from Dashboard or the tray.";
         }
         catch (Exception exception)
@@ -288,7 +316,7 @@ public sealed class ProfilesViewModel : ObservableObject
             return;
         }
 
-        if (!_confirmation.Confirm("Delete profile", $"Delete profile '{Name}'?"))
+        if (!_confirmation.Confirm("Delete profile", $"Delete saved profile '{Name}'?"))
         {
             return;
         }
@@ -296,7 +324,8 @@ public sealed class ProfilesViewModel : ObservableObject
         try
         {
             await _workspace.RemoveProfileAsync(id);
-            New();
+            IsDirty = false;
+            StartNewEditor();
             StatusMessage = "Profile deleted.";
         }
         catch (Exception exception)
@@ -315,6 +344,27 @@ public sealed class ProfilesViewModel : ObservableObject
             DelayBeforeSeconds = step.DelayBeforeSeconds
         }).ToArray()
     };
+
+    private void StartNewEditor()
+    {
+        SelectProfileWithoutPrompt(null, loadEditor: false);
+        _originalId = null;
+        _autoId = true;
+        _loading = true;
+        Id = string.Empty;
+        Name = string.Empty;
+        ClearSteps();
+        SelectedStep = null;
+        _loading = false;
+        _autoId = true;
+        IsDirty = false;
+        CanDelete = false;
+        NotifyStepsChanged();
+        RefreshValidation();
+        StatusMessage = HasAvailableTools
+            ? "New profile — choose a tool, add it, then build the launch order."
+            : "Create at least one tool before building a profile.";
+    }
 
     private void LoadEditor(ProfileDefinition profile, string originalId, bool autoId)
     {
@@ -338,12 +388,16 @@ public sealed class ProfilesViewModel : ObservableObject
         SelectedStep = Steps.FirstOrDefault();
         _loading = false;
         _autoId = autoId;
+        IsDirty = false;
+        CanDelete = true;
+        NotifyStepsChanged();
         RefreshValidation();
     }
 
     private void RefreshFromWorkspace(string? selectId = null)
     {
-        var profileId = selectId ?? _originalId ?? SelectedProfile?.Id;
+        var profileId = selectId ?? _originalId ?? _selectedProfile?.Id;
+        var toolToAddId = ToolToAdd?.Id;
 
         AvailableTools.Clear();
         foreach (var tool in _workspace.Configuration.Tools.OrderBy(tool => tool.Name, StringComparer.OrdinalIgnoreCase))
@@ -351,23 +405,62 @@ public sealed class ProfilesViewModel : ObservableObject
             AvailableTools.Add(tool);
         }
 
+        ToolToAdd = toolToAddId is null
+            ? AvailableTools.FirstOrDefault()
+            : AvailableTools.FirstOrDefault(tool => string.Equals(tool.Id, toolToAddId, StringComparison.Ordinal))
+                ?? AvailableTools.FirstOrDefault();
+
         Profiles.Clear();
         foreach (var profile in _workspace.Configuration.Profiles.OrderBy(profile => profile.Name, StringComparer.OrdinalIgnoreCase))
         {
             Profiles.Add(profile);
         }
 
+        OnPropertyChanged(nameof(HasProfiles));
+        OnPropertyChanged(nameof(HasNoProfiles));
         OnPropertyChanged(nameof(HasAvailableTools));
         OnPropertyChanged(nameof(HasNoAvailableTools));
+        AddStepCommand.NotifyCanExecuteChanged();
 
         if (!string.IsNullOrWhiteSpace(profileId))
         {
-            SelectedProfile = Profiles.FirstOrDefault(profile =>
+            var matching = Profiles.FirstOrDefault(profile =>
                 string.Equals(profile.Id, profileId, StringComparison.Ordinal));
+            if (IsDirty)
+            {
+                SetProperty(ref _selectedProfile, matching, nameof(SelectedProfile));
+                CanDelete = !string.IsNullOrWhiteSpace(_originalId) && matching is not null;
+            }
+            else
+            {
+                SelectProfileWithoutPrompt(matching, loadEditor: matching is not null);
+            }
         }
 
         RefreshValidation();
     }
+
+    private void SelectProfileWithoutPrompt(ProfileDefinition? profile, bool loadEditor)
+    {
+        if (!SetProperty(ref _selectedProfile, profile, nameof(SelectedProfile)))
+        {
+            return;
+        }
+
+        if (loadEditor && profile is not null)
+        {
+            LoadEditor(profile, profile.Id, autoId: false);
+        }
+        else if (profile is null)
+        {
+            CanDelete = false;
+        }
+    }
+
+    private bool ConfirmDiscardChanges() =>
+        _confirmation.Confirm(
+            "Discard unsaved profile changes?",
+            "This profile has changes that have not been saved. Discard them and continue?");
 
     private void RefreshValidation()
     {
@@ -381,14 +474,16 @@ public sealed class ProfilesViewModel : ObservableObject
             .Distinct(StringComparer.Ordinal)
             .ToArray();
 
-        CanSave = errors.Length == 0;
-        ValidationMessage = errors.Length == 0
-            ? $"Ready — {Steps.Count} step{(Steps.Count == 1 ? string.Empty : "s")} will run in this order."
+        var valid = errors.Length == 0;
+        CanSave = valid && IsDirty;
+        ValidationMessage = valid
+            ? IsDirty
+                ? $"Ready — save {Steps.Count} step{(Steps.Count == 1 ? string.Empty : "s")} in this order."
+                : $"Saved profile is valid — {Steps.Count} step{(Steps.Count == 1 ? string.Empty : "s")} will run in this order."
             : string.Join(Environment.NewLine, errors);
     }
 
     private void AttachStep(ProfileStepEditorViewModel step) => step.PropertyChanged += OnStepPropertyChanged;
-
     private void DetachStep(ProfileStepEditorViewModel step) => step.PropertyChanged -= OnStepPropertyChanged;
 
     private void ClearSteps()
@@ -401,15 +496,50 @@ public sealed class ProfilesViewModel : ObservableObject
         Steps.Clear();
     }
 
-    private void OnStepPropertyChanged(object? sender, PropertyChangedEventArgs e) => RefreshValidation();
-
-    private void SetGeneratedId(string value)
+    private void OnStepPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (SetProperty(ref _id, value, nameof(Id)))
+        MarkDirty();
+        RefreshValidation();
+    }
+
+    private void MarkDirty()
+    {
+        if (!_loading)
         {
-            RefreshValidation();
+            IsDirty = true;
         }
     }
+
+    private void NotifyStepsChanged()
+    {
+        OnPropertyChanged(nameof(HasSteps));
+        OnPropertyChanged(nameof(HasNoSteps));
+        NotifyStepCommands();
+    }
+
+    private void NotifyStepCommands()
+    {
+        RemoveStepCommand.NotifyCanExecuteChanged();
+        MoveStepUpCommand.NotifyCanExecuteChanged();
+        MoveStepDownCommand.NotifyCanExecuteChanged();
+    }
+
+    private bool CanMoveSelectedStepUp() =>
+        SelectedStep is not null && Steps.IndexOf(SelectedStep) > 0;
+
+    private bool CanMoveSelectedStepDown()
+    {
+        if (SelectedStep is null)
+        {
+            return false;
+        }
+
+        var index = Steps.IndexOf(SelectedStep);
+        return index >= 0 && index < Steps.Count - 1;
+    }
+
+    private void SetGeneratedId(string value) =>
+        SetProperty(ref _id, value, nameof(Id));
 
     private string GenerateUniqueId(string seed)
     {

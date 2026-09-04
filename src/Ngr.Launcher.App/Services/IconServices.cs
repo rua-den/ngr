@@ -1,9 +1,12 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Ngr.Launcher.Core.Models;
 
 namespace Ngr.Launcher.App.Services;
 
@@ -26,6 +29,22 @@ public static class LauncherIconProvider
 
         return frame;
     }
+}
+
+public sealed class ToolIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is ToolDefinition { Kind: ToolKind.Application, Target: { Length: > 0 } target })
+        {
+            return WindowsShellIconProvider.GetSmallIcon(target) ?? LauncherIconProvider.GetIcon();
+        }
+
+        return LauncherIconProvider.GetIcon();
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
 }
 
 public static class WindowsShellIconProvider

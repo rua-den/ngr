@@ -35,6 +35,8 @@ public sealed class ToolLibraryViewModel : ObservableObject
     private string _validationMessage = string.Empty;
     private bool _canSave;
     private bool _canRun;
+    private bool _canDelete;
+    private bool _isDirty;
     private bool _autoId = true;
     private bool _loading;
 
@@ -62,28 +64,36 @@ public sealed class ToolLibraryViewModel : ObservableObject
         SelectedTemplate = Templates.FirstOrDefault();
         _workspace.Changed += (_, _) => _dispatcher.Invoke(() => RefreshFromWorkspace());
         RefreshFromWorkspace();
-        New();
+        StartNewEditor();
     }
 
     public ObservableCollection<ToolDefinition> Tools { get; } = [];
 
     public IReadOnlyList<ToolTemplate> Templates => ToolTemplates.All;
-
     public IReadOnlyList<ToolKind> ToolKinds { get; } = Enum.GetValues<ToolKind>();
-
     public IReadOnlyList<ShellKind> ShellKinds { get; } = Enum.GetValues<ShellKind>();
-
     public IReadOnlyList<CommandWindowMode> WindowModes { get; } = Enum.GetValues<CommandWindowMode>();
+
+    public bool HasTools => Tools.Count > 0;
+    public bool HasNoTools => !HasTools;
 
     public ToolDefinition? SelectedTool
     {
         get => _selectedTool;
         set
         {
-            if (SetProperty(ref _selectedTool, value) && value is not null)
+            if (ReferenceEquals(_selectedTool, value))
             {
-                LoadEditor(value, value.Id, autoId: false);
+                return;
             }
+
+            if (!_loading && IsDirty && !ConfirmDiscardChanges())
+            {
+                OnPropertyChanged(nameof(SelectedTool));
+                return;
+            }
+
+            SelectToolWithoutPrompt(value, loadEditor: value is not null);
         }
     }
 
@@ -105,6 +115,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
 
             if (SetProperty(ref _id, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -120,6 +131,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
                 return;
             }
 
+            MarkDirty();
             if (!_loading && _autoId)
             {
                 SetGeneratedId(string.IsNullOrWhiteSpace(value)
@@ -141,6 +153,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
                 return;
             }
 
+            MarkDirty();
             OnPropertyChanged(nameof(IsApplication));
             OnPropertyChanged(nameof(IsCommand));
             RefreshValidation();
@@ -148,7 +161,6 @@ public sealed class ToolLibraryViewModel : ObservableObject
     }
 
     public bool IsApplication => Kind == ToolKind.Application;
-
     public bool IsCommand => Kind == ToolKind.Command;
 
     public string Target
@@ -158,6 +170,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         {
             if (SetProperty(ref _target, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -170,6 +183,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         {
             if (SetProperty(ref _arguments, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -182,6 +196,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         {
             if (SetProperty(ref _commandText, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -194,6 +209,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         {
             if (SetProperty(ref _shell, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -206,6 +222,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         {
             if (SetProperty(ref _windowMode, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -218,6 +235,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         {
             if (SetProperty(ref _workingDirectory, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -230,6 +248,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
         {
             if (SetProperty(ref _environmentText, value))
             {
+                MarkDirty();
                 RefreshValidation();
             }
         }
@@ -259,25 +278,34 @@ public sealed class ToolLibraryViewModel : ObservableObject
         private set => SetProperty(ref _canRun, value);
     }
 
+    public bool CanDelete
+    {
+        get => _canDelete;
+        private set => SetProperty(ref _canDelete, value);
+    }
+
+    public bool IsDirty
+    {
+        get => _isDirty;
+        private set => SetProperty(ref _isDirty, value);
+    }
+
     public IRelayCommand NewCommand { get; }
-
     public IRelayCommand ApplyTemplateCommand { get; }
-
     public IRelayCommand BrowseTargetCommand { get; }
-
     public IRelayCommand BrowseWorkingDirectoryCommand { get; }
-
     public IAsyncRelayCommand SaveCommand { get; }
-
     public IAsyncRelayCommand DeleteCommand { get; }
-
     public IRelayCommand LaunchCommand { get; }
 
     public void New()
     {
-        SelectedTool = null;
-        LoadEditor(new ToolDefinition { Kind = ToolKind.Application }, originalId: null, autoId: true);
-        StatusMessage = "New tool — choose an application file or switch to Command.";
+        if (IsDirty && !ConfirmDiscardChanges())
+        {
+            return;
+        }
+
+        StartNewEditor();
     }
 
     public void ApplySelectedTemplate()
@@ -287,28 +315,35 @@ public sealed class ToolLibraryViewModel : ObservableObject
             return;
         }
 
-        SelectedTool = null;
+        if (IsDirty && !ConfirmDiscardChanges())
+        {
+            return;
+        }
+
+        SelectToolWithoutPrompt(null, loadEditor: false);
         var template = ToolTemplates.Create(SelectedTemplate.Key);
         LoadEditor(template, originalId: null, autoId: true);
         SetGeneratedId(GenerateUniqueId(CreateId(template.Id.Length > 0 ? template.Id : template.Name)));
+        IsDirty = true;
+        RefreshValidation();
         StatusMessage = $"Template applied: {SelectedTemplate.Name}. Review it, then Save or Test run.";
     }
 
     public void BrowseTarget()
     {
         var selected = _pathPicker.PickApplicationTarget(Target);
-        if (string.IsNullOrWhiteSpace(selected))
+        if (selected is null || string.IsNullOrWhiteSpace(selected.Target))
         {
             return;
         }
 
-        Target = selected;
+        Target = selected.Target;
         if (string.IsNullOrWhiteSpace(Name) || string.Equals(Name, "Application", StringComparison.OrdinalIgnoreCase))
         {
-            Name = Path.GetFileNameWithoutExtension(selected);
+            Name = selected.DisplayName;
         }
 
-        StatusMessage = "Application selected. You can test it before saving.";
+        StatusMessage = $"Selected '{selected.DisplayName}'. Test it before saving if you want to verify the launch.";
     }
 
     public void BrowseWorkingDirectory()
@@ -328,7 +363,9 @@ public sealed class ToolLibraryViewModel : ObservableObject
         RefreshValidation();
         if (!CanSave)
         {
-            StatusMessage = "Fix the configuration issue before saving.";
+            StatusMessage = IsDirty
+                ? "Fix the configuration issue before saving."
+                : "No unsaved changes.";
             return;
         }
 
@@ -338,7 +375,9 @@ public sealed class ToolLibraryViewModel : ObservableObject
             await _workspace.SaveToolAsync(_originalId, definition);
             _originalId = definition.Id;
             _autoId = false;
+            IsDirty = false;
             RefreshFromWorkspace(definition.Id);
+            RefreshValidation();
             StatusMessage = $"Saved '{definition.Name}'.";
         }
         catch (Exception exception)
@@ -356,7 +395,7 @@ public sealed class ToolLibraryViewModel : ObservableObject
             return;
         }
 
-        if (!_confirmation.Confirm("Delete tool", $"Delete tool '{Name}'?"))
+        if (!_confirmation.Confirm("Delete tool", $"Delete saved tool '{Name}'? Profiles that reference it may need to be fixed."))
         {
             return;
         }
@@ -364,7 +403,8 @@ public sealed class ToolLibraryViewModel : ObservableObject
         try
         {
             await _workspace.RemoveToolAsync(id);
-            New();
+            IsDirty = false;
+            StartNewEditor();
             StatusMessage = "Tool deleted.";
         }
         catch (Exception exception)
@@ -415,6 +455,13 @@ public sealed class ToolLibraryViewModel : ObservableObject
         };
     }
 
+    private void StartNewEditor()
+    {
+        SelectToolWithoutPrompt(null, loadEditor: false);
+        LoadEditor(new ToolDefinition { Kind = ToolKind.Application }, originalId: null, autoId: true);
+        StatusMessage = "New tool — choose an installed application or switch to Command.";
+    }
+
     private void LoadEditor(ToolDefinition tool, string? originalId, bool autoId)
     {
         _loading = true;
@@ -441,6 +488,8 @@ public sealed class ToolLibraryViewModel : ObservableObject
             SetGeneratedId(string.IsNullOrWhiteSpace(seed) ? string.Empty : GenerateUniqueId(CreateId(seed)));
         }
 
+        IsDirty = false;
+        CanDelete = !string.IsNullOrWhiteSpace(_originalId);
         OnPropertyChanged(nameof(IsApplication));
         OnPropertyChanged(nameof(IsCommand));
         RefreshValidation();
@@ -448,16 +497,59 @@ public sealed class ToolLibraryViewModel : ObservableObject
 
     private void RefreshFromWorkspace(string? selectId = null)
     {
-        var id = selectId ?? _originalId ?? SelectedTool?.Id;
+        var id = selectId ?? _originalId ?? _selectedTool?.Id;
         Tools.Clear();
         foreach (var tool in _workspace.Configuration.Tools.OrderBy(tool => tool.Name, StringComparer.OrdinalIgnoreCase))
         {
             Tools.Add(tool);
         }
 
-        if (!string.IsNullOrWhiteSpace(id))
+        OnPropertyChanged(nameof(HasTools));
+        OnPropertyChanged(nameof(HasNoTools));
+
+        if (string.IsNullOrWhiteSpace(id))
         {
-            SelectedTool = Tools.FirstOrDefault(tool => string.Equals(tool.Id, id, StringComparison.Ordinal));
+            return;
+        }
+
+        var matching = Tools.FirstOrDefault(tool => string.Equals(tool.Id, id, StringComparison.Ordinal));
+        if (IsDirty)
+        {
+            SetProperty(ref _selectedTool, matching, nameof(SelectedTool));
+            CanDelete = !string.IsNullOrWhiteSpace(_originalId) && matching is not null;
+            return;
+        }
+
+        SelectToolWithoutPrompt(matching, loadEditor: matching is not null);
+    }
+
+    private void SelectToolWithoutPrompt(ToolDefinition? tool, bool loadEditor)
+    {
+        if (!SetProperty(ref _selectedTool, tool, nameof(SelectedTool)))
+        {
+            return;
+        }
+
+        if (loadEditor && tool is not null)
+        {
+            LoadEditor(tool, tool.Id, autoId: false);
+        }
+        else if (tool is null)
+        {
+            CanDelete = false;
+        }
+    }
+
+    private bool ConfirmDiscardChanges() =>
+        _confirmation.Confirm(
+            "Discard unsaved tool changes?",
+            "This tool has changes that have not been saved. Discard them and continue?");
+
+    private void MarkDirty()
+    {
+        if (!_loading)
+        {
+            IsDirty = true;
         }
     }
 
@@ -494,20 +586,18 @@ public sealed class ToolLibraryViewModel : ObservableObject
         }
 
         var distinct = errors.Distinct(StringComparer.Ordinal).ToArray();
-        CanSave = distinct.Length == 0;
-        CanRun = distinct.Length == 0;
-        ValidationMessage = distinct.Length == 0
-            ? "Ready — test run it now, or save it for profiles."
+        var valid = distinct.Length == 0;
+        CanSave = valid && IsDirty;
+        CanRun = valid;
+        ValidationMessage = valid
+            ? IsDirty
+                ? "Ready — save the changes, or test run first."
+                : "Saved configuration is valid and ready to run."
             : string.Join(Environment.NewLine, distinct);
     }
 
-    private void SetGeneratedId(string value)
-    {
-        if (SetProperty(ref _id, value, nameof(Id)))
-        {
-            RefreshValidation();
-        }
-    }
+    private void SetGeneratedId(string value) =>
+        SetProperty(ref _id, value, nameof(Id));
 
     private string GenerateUniqueId(string seed)
     {

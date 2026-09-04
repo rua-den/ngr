@@ -26,6 +26,8 @@ public sealed class ToolLibraryViewModelTests
             viewModel.Name = "Web dev";
             viewModel.CommandText = "npm run dev -- --host";
 
+            Assert.True(viewModel.IsDirty);
+            Assert.True(viewModel.CanSave);
             await viewModel.SaveAsync();
             viewModel.LaunchCurrent();
 
@@ -33,6 +35,8 @@ public sealed class ToolLibraryViewModelTests
             Assert.Equal("web-dev", saved.Id);
             Assert.Equal("npm run dev -- --host", saved.CommandText);
             Assert.Equal("web-dev", Assert.Single(spawner.Started).Id);
+            Assert.False(viewModel.IsDirty);
+            Assert.False(viewModel.CanSave);
         }
         finally
         {
@@ -46,13 +50,13 @@ public sealed class ToolLibraryViewModelTests
         var directory = Directory.CreateTempSubdirectory("ngr-launcher-tool-picker-").FullName;
         try
         {
-            var executable = Path.Combine(directory, "Demo Tool.exe");
+            var executable = Path.Combine(directory, "demo.exe");
             await File.WriteAllTextAsync(executable, string.Empty);
             var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
             await workspace.InitializeAsync();
             var picker = new RecordingPathPicker
             {
-                Target = executable,
+                Target = new ApplicationTargetSelection(executable, "Demo Tool"),
                 Folder = directory
             };
             var viewModel = CreateViewModel(workspace, new RecordingSpawner(), picker: picker);
@@ -68,6 +72,33 @@ public sealed class ToolLibraryViewModelTests
             Assert.False(viewModel.IsCommand);
             Assert.True(viewModel.CanSave);
             Assert.True(viewModel.CanRun);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Installed_app_friendly_name_is_used_instead_of_executable_file_name()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-tool-friendly-name-").FullName;
+        try
+        {
+            var executable = Path.Combine(directory, "chrome.exe");
+            await File.WriteAllTextAsync(executable, string.Empty);
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            var picker = new RecordingPathPicker
+            {
+                Target = new ApplicationTargetSelection(executable, "Google Chrome")
+            };
+            var viewModel = CreateViewModel(workspace, new RecordingSpawner(), picker: picker);
+
+            viewModel.BrowseTarget();
+
+            Assert.Equal("Google Chrome", viewModel.Name);
+            Assert.Equal("google-chrome", viewModel.Id);
         }
         finally
         {
@@ -115,6 +146,67 @@ public sealed class ToolLibraryViewModelTests
 
             Assert.False(viewModel.IsApplication);
             Assert.True(viewModel.IsCommand);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Unsaved_tool_changes_survive_unrelated_workspace_updates()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-tool-dirty-refresh-").FullName;
+        try
+        {
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            await workspace.SaveToolAsync(null, Command("one"));
+            var viewModel = CreateViewModel(workspace, new RecordingSpawner());
+            viewModel.SelectedTool = Assert.Single(viewModel.Tools);
+            viewModel.Name = "Unsaved rename";
+
+            await workspace.SaveToolAsync(null, Command("two"));
+
+            Assert.True(viewModel.IsDirty);
+            Assert.Equal("Unsaved rename", viewModel.Name);
+            Assert.Equal("one", viewModel.SelectedTool?.Id);
+            Assert.Equal(2, viewModel.Tools.Count);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Declining_discard_keeps_current_tool_and_unsaved_editor()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-tool-discard-").FullName;
+        try
+        {
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            await workspace.SaveToolAsync(null, Command("one"));
+            await workspace.SaveToolAsync(null, Command("two"));
+            var confirmation = new ToggleConfirmation { Result = false };
+            var viewModel = new ToolLibraryViewModel(
+                workspace,
+                new RecordingSpawner(),
+                confirmation,
+                new InlineUiDispatcher(),
+                new RecordingPathPicker());
+            var first = viewModel.Tools.Single(tool => tool.Id == "one");
+            var second = viewModel.Tools.Single(tool => tool.Id == "two");
+            viewModel.SelectedTool = first;
+            viewModel.Name = "Unsaved rename";
+
+            viewModel.SelectedTool = second;
+
+            Assert.Equal("one", viewModel.SelectedTool?.Id);
+            Assert.Equal("Unsaved rename", viewModel.Name);
+            Assert.True(viewModel.IsDirty);
+            Assert.Equal(1, confirmation.CallCount);
         }
         finally
         {
@@ -187,10 +279,10 @@ public sealed class ToolLibraryViewModelTests
 
     private sealed class RecordingPathPicker : IPathPickerService
     {
-        public string? Target { get; init; }
+        public ApplicationTargetSelection? Target { get; init; }
         public string? Folder { get; init; }
 
-        public string? PickApplicationTarget(string? currentPath = null) => Target;
+        public ApplicationTargetSelection? PickApplicationTarget(string? currentPath = null) => Target;
         public string? PickFolder(string? currentPath = null) => Folder;
     }
 
@@ -202,7 +294,12 @@ public sealed class ToolLibraryViewModelTests
     private sealed class ToggleConfirmation : IConfirmationService
     {
         public bool Result { get; set; }
+        public int CallCount { get; private set; }
 
-        public bool Confirm(string title, string message) => Result;
+        public bool Confirm(string title, string message)
+        {
+            CallCount++;
+            return Result;
+        }
     }
 }

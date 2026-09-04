@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
@@ -17,16 +18,17 @@ public sealed class WpfConfirmationService : IConfirmationService
         MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
 }
 
+public sealed record ApplicationTargetSelection(string Target, string DisplayName);
+
 public interface IPathPickerService
 {
-    string? PickApplicationTarget(string? currentPath = null);
+    ApplicationTargetSelection? PickApplicationTarget(string? currentPath = null);
     string? PickFolder(string? currentPath = null);
 }
 
 public sealed class WpfPathPickerService : IPathPickerService
 {
     private readonly IInstalledApplicationCatalog _applicationCatalog;
-    private IReadOnlyList<InstalledApplicationEntry>? _cachedApplications;
 
     public WpfPathPickerService() : this(new WindowsInstalledApplicationCatalog())
     {
@@ -37,10 +39,12 @@ public sealed class WpfPathPickerService : IPathPickerService
         _applicationCatalog = applicationCatalog ?? throw new ArgumentNullException(nameof(applicationCatalog));
     }
 
-    public string? PickApplicationTarget(string? currentPath = null)
+    public ApplicationTargetSelection? PickApplicationTarget(string? currentPath = null)
     {
-        _cachedApplications ??= _applicationCatalog.Discover();
-        var picker = new InstalledApplicationPickerWindow(_cachedApplications, currentPath);
+        // Re-discover on every open so newly installed/uninstalled apps are reflected
+        // without forcing the user to restart NGR Launcher.
+        var applications = _applicationCatalog.Discover();
+        var picker = new InstalledApplicationPickerWindow(applications, currentPath);
         if (Application.Current?.MainWindow is { IsVisible: true } owner)
         {
             picker.Owner = owner;
@@ -49,10 +53,23 @@ public sealed class WpfPathPickerService : IPathPickerService
         var result = picker.ShowDialog();
         if (picker.BrowseFileRequested)
         {
-            return PickApplicationFile(currentPath);
+            var file = PickApplicationFile(currentPath);
+            return file is null
+                ? null
+                : new ApplicationTargetSelection(file, ResolveFileDisplayName(file));
         }
 
-        return result == true ? picker.SelectedTarget : null;
+        if (result != true || string.IsNullOrWhiteSpace(picker.SelectedTarget))
+        {
+            return null;
+        }
+
+        var target = picker.SelectedTarget;
+        var entry = applications.FirstOrDefault(candidate =>
+            string.Equals(candidate.Target, target, StringComparison.OrdinalIgnoreCase));
+        return new ApplicationTargetSelection(
+            target,
+            entry?.Name ?? ResolveFileDisplayName(target));
     }
 
     public string? PickFolder(string? currentPath = null)
@@ -98,6 +115,31 @@ public sealed class WpfPathPickerService : IPathPickerService
         }
 
         return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    private static string ResolveFileDisplayName(string path)
+    {
+        if (Path.GetExtension(path).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var version = FileVersionInfo.GetVersionInfo(path);
+                if (!string.IsNullOrWhiteSpace(version.FileDescription))
+                {
+                    return version.FileDescription.Trim();
+                }
+
+                if (!string.IsNullOrWhiteSpace(version.ProductName))
+                {
+                    return version.ProductName.Trim();
+                }
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+
+        return Path.GetFileNameWithoutExtension(path);
     }
 }
 

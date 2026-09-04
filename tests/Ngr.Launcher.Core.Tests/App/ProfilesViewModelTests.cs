@@ -22,16 +22,17 @@ public sealed class ProfilesViewModelTests
             var viewModel = CreateViewModel(workspace);
 
             viewModel.Name = "Startup Stack";
+            viewModel.ToolToAdd = viewModel.AvailableTools.Single(tool => tool.Id == "one");
             viewModel.AddStep();
-            viewModel.Steps[0].ToolId = "one";
             viewModel.Steps[0].DelayBeforeSeconds = 2;
+            viewModel.ToolToAdd = viewModel.AvailableTools.Single(tool => tool.Id == "two");
             viewModel.AddStep();
-            viewModel.Steps[1].ToolId = "two";
             viewModel.Steps[1].DelayBeforeSeconds = 7;
             viewModel.SelectedStep = viewModel.Steps[1];
             viewModel.MoveSelectedStepUp();
 
             Assert.Equal("startup-stack", viewModel.Id);
+            Assert.True(viewModel.IsDirty);
             Assert.True(viewModel.CanSave);
             await viewModel.SaveAsync();
 
@@ -39,6 +40,32 @@ public sealed class ProfilesViewModelTests
             Assert.Equal("startup-stack", profile.Id);
             Assert.Equal(new[] { "two", "one" }, profile.Steps.Select(step => step.ToolId));
             Assert.Equal(new[] { 7, 2 }, profile.Steps.Select(step => step.DelayBeforeSeconds));
+            Assert.False(viewModel.IsDirty);
+            Assert.False(viewModel.CanSave);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Add_step_uses_the_tool_chosen_in_the_add_picker()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-profile-add-tool-").FullName;
+        try
+        {
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            await workspace.SaveToolAsync(null, Command("one"));
+            await workspace.SaveToolAsync(null, Command("two"));
+            var viewModel = CreateViewModel(workspace);
+            viewModel.Name = "Stack";
+            viewModel.ToolToAdd = viewModel.AvailableTools.Single(tool => tool.Id == "two");
+
+            viewModel.AddStep();
+
+            Assert.Equal("two", Assert.Single(viewModel.Steps).ToolId);
         }
         finally
         {
@@ -94,6 +121,64 @@ public sealed class ProfilesViewModelTests
         }
     }
 
+    [Fact]
+    public async Task Unsaved_profile_changes_survive_unrelated_workspace_updates()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-profile-dirty-refresh-").FullName;
+        try
+        {
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            await workspace.SaveToolAsync(null, Command("one"));
+            await workspace.SaveProfileAsync(null, Profile("profile-one", "one"));
+            var viewModel = CreateViewModel(workspace);
+            viewModel.SelectedProfile = Assert.Single(viewModel.Profiles);
+            viewModel.Name = "Unsaved profile rename";
+
+            await workspace.SaveToolAsync(null, Command("two"));
+
+            Assert.True(viewModel.IsDirty);
+            Assert.Equal("Unsaved profile rename", viewModel.Name);
+            Assert.Equal("profile-one", viewModel.SelectedProfile?.Id);
+            Assert.Equal(2, viewModel.AvailableTools.Count);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Declining_discard_keeps_current_profile_and_unsaved_editor()
+    {
+        var directory = Directory.CreateTempSubdirectory("ngr-launcher-profile-discard-").FullName;
+        try
+        {
+            var workspace = new LauncherWorkspace(new JsonConfigurationStore(directory));
+            await workspace.InitializeAsync();
+            await workspace.SaveToolAsync(null, Command("one"));
+            await workspace.SaveProfileAsync(null, Profile("profile-one", "one"));
+            await workspace.SaveProfileAsync(null, Profile("profile-two", "one"));
+            var confirmation = new ToggleConfirmation { Result = false };
+            var viewModel = new ProfilesViewModel(workspace, confirmation, new InlineUiDispatcher());
+            var first = viewModel.Profiles.Single(profile => profile.Id == "profile-one");
+            var second = viewModel.Profiles.Single(profile => profile.Id == "profile-two");
+            viewModel.SelectedProfile = first;
+            viewModel.Name = "Unsaved profile rename";
+
+            viewModel.SelectedProfile = second;
+
+            Assert.Equal("profile-one", viewModel.SelectedProfile?.Id);
+            Assert.Equal("Unsaved profile rename", viewModel.Name);
+            Assert.True(viewModel.IsDirty);
+            Assert.Equal(1, confirmation.CallCount);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static ProfilesViewModel CreateViewModel(LauncherWorkspace workspace) =>
         new(workspace, new AlwaysConfirm(), new InlineUiDispatcher());
 
@@ -107,8 +192,27 @@ public sealed class ProfilesViewModelTests
         WindowMode = CommandWindowMode.Hidden
     };
 
+    private static ProfileDefinition Profile(string id, string toolId) => new()
+    {
+        Id = id,
+        Name = id,
+        Steps = [new ProfileStep { ToolId = toolId }]
+    };
+
     private sealed class AlwaysConfirm : IConfirmationService
     {
         public bool Confirm(string title, string message) => true;
+    }
+
+    private sealed class ToggleConfirmation : IConfirmationService
+    {
+        public bool Result { get; set; }
+        public int CallCount { get; private set; }
+
+        public bool Confirm(string title, string message)
+        {
+            CallCount++;
+            return Result;
+        }
     }
 }
